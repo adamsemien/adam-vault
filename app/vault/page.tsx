@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Secret, ProjectToken, AuditLog, AuthUser } from '@/types';
 import { useApi } from '@/lib/useApi';
+import { useIsMobile } from '@/lib/use-mobile';
 import { SecretsList } from '@/components/SecretsList';
 import { TokensList } from '@/components/TokensList';
 import { AuditLogComponent } from '@/components/AuditLog';
@@ -13,7 +14,7 @@ import { DeleteModal } from '@/components/DeleteModal';
 import { NewTokenModal } from '@/components/NewTokenModal';
 import { RevokeTokenModal } from '@/components/RevokeTokenModal';
 import { ToastManager } from '@/components/Toast';
-import { LogOut } from 'lucide-react';
+import { LogOut, Key, Coins, Clock } from 'lucide-react';
 
 // ─── Design tokens ───────────────────────────────────────────────────────────
 const C = {
@@ -44,8 +45,15 @@ const NAV_TABS: { id: View; label: string }[] = [
   { id: 'audit', label: 'Audit Log' },
 ];
 
+const BOTTOM_NAV = [
+  { id: 'secrets' as View, label: 'Secrets', Icon: Key },
+  { id: 'tokens' as View, label: 'Tokens', Icon: Coins },
+  { id: 'audit' as View, label: 'Audit Log', Icon: Clock },
+];
+
 export default function VaultPage() {
   const api = useApi();
+  const isMobile = useIsMobile();
   const [view, setView] = useState<View>('secrets');
   const [user, setUser] = useState<AuthUser | null>(null);
   const [healthy, setHealthy] = useState(true);
@@ -231,84 +239,139 @@ export default function VaultPage() {
   return (
     <div style={{ minHeight: '100vh', background: C.pageBg, color: C.textPrimary, fontFamily: "'Inter', sans-serif", fontFeatureSettings: '"cv01", "ss03"' }}>
 
-      {/* ── Top Nav (two-row on mobile, single-row on sm+) ── */}
-      <nav className="av-nav">
-        {/* Row 1: logo left, live dot + sign-out right */}
-        <div className="av-nav-row1">
-          {/* Left: monogram + wordmark + live dot (mobile: show here) */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{
-              width: 26, height: 26,
-              borderRadius: 6,
-              background: C.brandIndigo,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              flexShrink: 0,
-            }}>
-              <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 700, color: '#fff', letterSpacing: '-0.02em', fontFeatureSettings: '"cv01", "ss03"' }}>AV</span>
+      {/* ── Top Nav ── */}
+      {isMobile ? (
+        /* Mobile: two rows */
+        <nav style={{
+          position: 'sticky', top: 0, zIndex: 30,
+          borderBottom: '1px solid rgba(255,255,255,0.05)',
+          background: C.panelBg,
+        }}>
+          {/* Row 1: logo + title left, dot + signout right */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px', height: 48 }}>
+            {/* Left */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{
+                width: 32, height: 32, borderRadius: 8,
+                background: C.brandIndigo,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: '#fff', letterSpacing: '-0.02em' }}>AV</span>
+              </div>
+              <span style={{ fontSize: 14, fontWeight: 500, color: C.textPrimary, letterSpacing: '-0.01em' }}>
+                Adam Vault
+              </span>
             </div>
-            <span style={{ fontSize: 14, fontWeight: 500, color: C.textPrimary, letterSpacing: '-0.01em', fontFeatureSettings: '"cv01", "ss03"' }}>
-              Adam Vault
-            </span>
-            {/* Live dot — shown inline with wordmark on mobile */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 4 }}>
-              <div style={{ position: 'relative', width: 6, height: 6 }}>
+            {/* Right */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {/* Green pulse dot */}
+              <div style={{ position: 'relative', width: 8, height: 8 }}>
                 <div style={{
-                  width: 6, height: 6, borderRadius: '50%',
+                  width: 8, height: 8, borderRadius: '50%',
                   background: healthy ? C.success : C.danger,
                   position: 'absolute',
                 }} />
                 {healthy && (
                   <div style={{
-                    position: 'absolute', inset: -2,
-                    borderRadius: '50%',
-                    background: `rgba(16,185,129,0.3)`,
+                    position: 'absolute', inset: -2, borderRadius: '50%',
+                    background: 'rgba(16,185,129,0.3)',
                     animation: 'ping 2s ease-in-out infinite',
                   }} />
                 )}
               </div>
+              {/* Sign out icon button - 44px tap target */}
+              <button
+                onClick={handleSignOut}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  minWidth: 44, minHeight: 44,
+                  background: 'transparent', border: 'none',
+                  color: C.textMuted, cursor: 'pointer',
+                }}
+              >
+                <LogOut size={18} />
+              </button>
             </div>
           </div>
 
-          {/* Right: desktop-only live text + sign out */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            {/* "Live" text hidden on mobile, shown on sm+ via CSS */}
-            <span
-              className="av-live-text"
-              style={{ fontSize: 12, fontWeight: 500, color: healthy ? C.success : C.danger, fontFamily: "'Inter', sans-serif" }}
-            >
-              Live
-            </span>
-
-            <button
-              className="av-signout-btn"
-              onClick={handleSignOut}
-            >
-              <LogOut size={11} />
-              <span>Sign out</span>
-            </button>
+          {/* Row 2: three full-width tabs */}
+          <div style={{ display: 'flex', height: 40 }}>
+            {NAV_TABS.map(({ id, label }) => (
+              <button
+                key={id}
+                onClick={() => setView(id)}
+                style={{
+                  flex: 1,
+                  background: view === id ? 'rgba(255,255,255,0.06)' : 'transparent',
+                  color: view === id ? C.textPrimary : C.textMuted,
+                  border: 'none', cursor: 'pointer',
+                  fontSize: 13, fontWeight: 500,
+                  fontFamily: "'Inter', sans-serif",
+                  fontFeatureSettings: '"cv01", "ss03"',
+                  transition: 'all 150ms ease',
+                }}
+              >
+                {label}
+              </button>
+            ))}
           </div>
-        </div>
+        </nav>
+      ) : (
+        /* Desktop: single row */
+        <nav className="av-nav">
+          <div className="av-nav-row1">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{
+                width: 26, height: 26, borderRadius: 6,
+                background: C.brandIndigo,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              }}>
+                <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 700, color: '#fff', letterSpacing: '-0.02em', fontFeatureSettings: '"cv01", "ss03"' }}>AV</span>
+              </div>
+              <span style={{ fontSize: 14, fontWeight: 500, color: C.textPrimary, letterSpacing: '-0.01em', fontFeatureSettings: '"cv01", "ss03"' }}>
+                Adam Vault
+              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 4 }}>
+                <div style={{ position: 'relative', width: 6, height: 6 }}>
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: healthy ? C.success : C.danger, position: 'absolute' }} />
+                  {healthy && (
+                    <div style={{ position: 'absolute', inset: -2, borderRadius: '50%', background: 'rgba(16,185,129,0.3)', animation: 'ping 2s ease-in-out infinite' }} />
+                  )}
+                </div>
+              </div>
+            </div>
 
-        {/* Row 2: nav tabs (full width on mobile, centered compact on desktop) */}
-        <div className="av-nav-row2">
-          {NAV_TABS.map(({ id, label }) => (
-            <button
-              key={id}
-              className="av-nav-tab"
-              onClick={() => setView(id)}
-              style={{
-                background: view === id ? 'rgba(255,255,255,0.06)' : 'transparent',
-                color: view === id ? C.textPrimary : C.textMuted,
-              }}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      </nav>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ fontSize: 12, fontWeight: 500, color: healthy ? C.success : C.danger, fontFamily: "'Inter', sans-serif" }}>
+                Live
+              </span>
+              <button className="av-signout-btn" onClick={handleSignOut}>
+                <LogOut size={11} />
+                <span>Sign out</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="av-nav-row2">
+            {NAV_TABS.map(({ id, label }) => (
+              <button
+                key={id}
+                className="av-nav-tab"
+                onClick={() => setView(id)}
+                style={{
+                  background: view === id ? 'rgba(255,255,255,0.06)' : 'transparent',
+                  color: view === id ? C.textPrimary : C.textMuted,
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </nav>
+      )}
 
       {/* ── Main Content ── */}
-      <main className="av-main">
+      <main className="av-main pb-[56px] md:pb-0">
 
         {/* SECRETS */}
         {view === 'secrets' && (
@@ -367,6 +430,37 @@ export default function VaultPage() {
         )}
       </main>
 
+      {/* ── Mobile Bottom Nav ── */}
+      <nav
+        className="fixed bottom-0 left-0 right-0 z-50 border-t md:hidden flex"
+        style={{
+          background: C.panelBg,
+          borderColor: 'rgba(255,255,255,0.08)',
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        }}
+      >
+        {BOTTOM_NAV.map(({ id, label, Icon }) => (
+          <button
+            key={id}
+            onClick={() => setView(id)}
+            className="flex flex-1 flex-col items-center justify-center gap-1 py-2"
+            style={{
+              minHeight: 56,
+              color: view === id ? '#7170ff' : '#62666d',
+              fontSize: 11,
+              fontWeight: 500,
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              fontFamily: "'Inter', sans-serif",
+            }}
+          >
+            <Icon size={20} />
+            <span>{label}</span>
+          </button>
+        ))}
+      </nav>
+
       {/* ── Modals & Panels ── */}
       <SecretModal
         open={secretModalOpen}
@@ -415,15 +509,6 @@ export default function VaultPage() {
         @keyframes ping {
           0%, 100% { transform: scale(1); opacity: 0.3; }
           50% { transform: scale(1.6); opacity: 0; }
-        }
-        /* Hide "Live" text label on mobile — we only show the dot */
-        .av-live-text {
-          display: none;
-        }
-        @media (min-width: 640px) {
-          .av-live-text {
-            display: inline;
-          }
         }
       `}</style>
     </div>

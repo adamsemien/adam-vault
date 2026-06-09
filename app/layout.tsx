@@ -1,9 +1,16 @@
 import type { ReactNode } from 'react';
+import type { Viewport } from 'next';
 import './globals.css';
 
 export const metadata = {
   title: 'Adam Vault',
   description: 'Personal Secrets Management',
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -22,7 +29,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           }
         `}</style>
       </head>
-      <body style={{ backgroundColor: '#08090a', color: '#f7f8f8' }}>
+      <body
+        className="min-h-dvh overflow-x-hidden"
+        style={{ backgroundColor: '#08090a', color: '#f7f8f8' }}
+      >
         {children}
       </body>
     </html>

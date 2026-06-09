@@ -102,16 +102,16 @@ export function SecretsList({
           </span>
         </div>
 
-        {/* Right: filter + add */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexGrow: 1, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-          {/* Filter dropdown */}
+        {/* Right: filter (desktop only) + add */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexGrow: 1, justifyContent: 'flex-end' }}>
+          {/* Filter dropdown — hidden on mobile */}
           {allTags.length > 0 && (
-            <div style={{ position: 'relative' }}>
+            <div className="hidden md:block" style={{ position: 'relative' }}>
               <button
                 onClick={() => setFilterOpen(!filterOpen)}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 6,
-                  height: 44, paddingLeft: 10, paddingRight: 10,
+                  height: 32, paddingLeft: 10, paddingRight: 10,
                   background: 'rgba(255,255,255,0.04)',
                   border: `1px solid ${C.borderDefault}`,
                   borderRadius: 6,
@@ -181,13 +181,23 @@ export function SecretsList({
             </div>
           )}
 
-          {/* Add Key primary button */}
+          {/* Add Key primary button — 44px on mobile, 32px on desktop, NOT full-width */}
           <motion.button
             onClick={onAddKey}
             whileHover={{ background: '#6b79e0' }}
             whileTap={{ scale: 0.97 }}
-            className="av-add-btn"
-            style={{ background: C.brandIndigo }}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              height: 44,
+              paddingLeft: 16, paddingRight: 16,
+              borderRadius: 6, border: 'none',
+              color: '#fff', fontSize: 13, fontWeight: 500,
+              cursor: 'pointer',
+              fontFamily: "'Inter', sans-serif",
+              fontFeatureSettings: '"cv01","ss03"',
+              background: C.brandIndigo,
+              width: 'auto',
+            }}
           >
             Add Key
           </motion.button>
@@ -198,11 +208,11 @@ export function SecretsList({
       {isLoading ? (
         <>
           {/* Mobile skeleton cards */}
-          <div className="av-card-view">
+          <div className="flex flex-col gap-3 md:hidden pt-3">
             {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
           </div>
           {/* Desktop skeleton table */}
-          <div className="av-table-view">
+          <div className="hidden md:block w-full overflow-x-auto">
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ borderBottom: `1px solid ${C.borderDefault}` }}>
@@ -252,7 +262,7 @@ export function SecretsList({
       ) : (
         <>
           {/* ── Mobile card view ── */}
-          <div className="av-card-view">
+          <div className="flex flex-col gap-3 md:hidden pt-3">
             {filteredSecrets.length === 0 ? (
               <div style={{ padding: '40px 0', textAlign: 'center', color: C.textSubtle, fontSize: 13, fontFamily: "'Inter', sans-serif" }}>
                 No secrets match the selected filter
@@ -261,49 +271,45 @@ export function SecretsList({
               filteredSecrets.map((secret, i) => (
                 <motion.div
                   key={secret.id}
-                  className="av-card"
                   initial={{ opacity: 0, y: 4 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.03, duration: 0.15 }}
+                  style={{
+                    background: 'rgba(255,255,255,0.02)',
+                    border: '1px solid rgba(255,255,255,0.06)',
+                    borderRadius: 8,
+                    padding: '12px 14px',
+                  }}
                 >
-                  {/* Name */}
-                  <div className="av-card-name">{secret.name}</div>
-
-                  {/* Service + Status */}
-                  <div className="av-card-meta">
-                    <span style={{ color: C.textMuted, fontFamily: "'Inter', sans-serif" }}>{secret.service}</span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                      <div style={{
-                        width: 6, height: 6, borderRadius: '50%',
-                        background: secret.needs_rotation ? C.warning : C.success,
-                        flexShrink: 0,
-                      }} />
-                      <span style={{
-                        fontSize: 13,
-                        color: secret.needs_rotation ? C.warning : C.success,
-                        fontFamily: "'Inter', sans-serif",
-                        fontWeight: 500,
-                      }}>
-                        {secret.needs_rotation ? 'Needs Rotation' : 'OK'}
-                      </span>
-                    </div>
+                  {/* Row 1: Key name + status */}
+                  <div className="flex items-center justify-between mb-2">
+                    <span style={{ fontFamily: 'JetBrains Mono', fontSize: 13, color: '#f7f8f8', fontWeight: 600 }}>
+                      {secret.name}
+                    </span>
+                    <span style={{ color: secret.needs_rotation ? '#f59e0b' : '#10b981', fontSize: 11 }}>
+                      {secret.needs_rotation ? '⚠ Needs Rotation' : '✓ OK'}
+                    </span>
                   </div>
 
-                  {/* Tags */}
+                  {/* Row 2: Service + last rotated */}
+                  <div className="flex items-center gap-3 mb-2">
+                    <span style={{ color: '#8a8f98', fontSize: 12 }}>{secret.service}</span>
+                    <span style={{ color: '#62666d', fontSize: 12 }}>
+                      {secret.last_rotated ? formatDistanceToNow(new Date(secret.last_rotated)) : 'never'}
+                    </span>
+                  </div>
+
+                  {/* Row 3: Tags */}
                   {secret.project_tags && secret.project_tags.length > 0 && (
-                    <div className="av-card-tags">
+                    <div className="flex flex-wrap gap-1 mb-3">
                       {secret.project_tags.map((tag) => (
                         <span
                           key={tag}
                           style={{
-                            padding: '2px 8px',
-                            background: 'transparent',
-                            border: `1px solid rgba(255,255,255,0.05)`,
-                            color: C.textMuted,
-                            fontSize: 12, fontWeight: 500,
+                            fontSize: 11, color: '#8a8f98',
+                            border: '1px solid rgba(255,255,255,0.08)',
                             borderRadius: 9999,
-                            fontFamily: "'Inter', sans-serif",
-                            fontFeatureSettings: '"cv01","ss03"',
+                            padding: '1px 8px',
                           }}
                         >
                           {tag}
@@ -312,23 +318,32 @@ export function SecretsList({
                     </div>
                   )}
 
-                  {/* Actions */}
-                  <div className="av-card-actions">
-                    {[
-                      { label: 'View', icon: <Eye size={15} />, action: () => onReveal(secret), danger: false },
-                      { label: 'Edit', icon: <Pencil size={15} />, action: () => onEdit(secret), danger: false },
-                      { label: 'Rotate', icon: <RefreshCw size={15} />, action: () => onRotate(secret), danger: false },
-                      { label: 'Delete', icon: <Trash2 size={15} />, action: () => onDelete(secret), danger: true },
-                    ].map(({ label, icon, action, danger }) => (
-                      <button
-                        key={label}
-                        onClick={action}
-                        title={label}
-                        className={`av-card-action-btn${danger ? ' danger' : ''}`}
-                      >
-                        {icon}
-                      </button>
-                    ))}
+                  {/* Row 4: Action buttons — 44px height each */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => onReveal(secret)}
+                      style={{ flex: 1, minHeight: 44, fontSize: 12, color: '#8a8f98', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, cursor: 'pointer' }}
+                    >
+                      Reveal
+                    </button>
+                    <button
+                      onClick={() => onEdit(secret)}
+                      style={{ flex: 1, minHeight: 44, fontSize: 12, color: '#8a8f98', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, cursor: 'pointer' }}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => onRotate(secret)}
+                      style={{ flex: 1, minHeight: 44, fontSize: 12, color: '#8a8f98', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, cursor: 'pointer' }}
+                    >
+                      Rotate
+                    </button>
+                    <button
+                      onClick={() => onDelete(secret)}
+                      style={{ flex: 1, minHeight: 44, fontSize: 12, color: '#ef4444', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: 6, cursor: 'pointer' }}
+                    >
+                      Delete
+                    </button>
                   </div>
                 </motion.div>
               ))
@@ -336,7 +351,7 @@ export function SecretsList({
           </div>
 
           {/* ── Desktop table view ── */}
-          <div className="av-table-view">
+          <div className="hidden md:block w-full overflow-x-auto">
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ borderBottom: `1px solid ${C.borderDefault}` }}>
