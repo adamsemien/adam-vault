@@ -53,6 +53,18 @@ function SkeletonRow() {
   );
 }
 
+function SkeletonCard() {
+  return (
+    <div className="av-card">
+      <div style={{ height: 14, width: 180, borderRadius: 4, background: 'rgba(255,255,255,0.04)', animation: 'skeleton-pulse 1.5s ease-in-out infinite' }} />
+      <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ height: 12, width: 80, borderRadius: 4, background: 'rgba(255,255,255,0.04)', animation: 'skeleton-pulse 1.5s ease-in-out infinite' }} />
+        <div style={{ height: 12, width: 60, borderRadius: 4, background: 'rgba(255,255,255,0.04)', animation: 'skeleton-pulse 1.5s ease-in-out infinite' }} />
+      </div>
+    </div>
+  );
+}
+
 export function SecretsList({
   secrets,
   selectedTags,
@@ -76,11 +88,7 @@ export function SecretsList({
   return (
     <div>
       {/* ── Toolbar ── */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '12px 0',
-        borderBottom: `1px solid ${C.borderSubtle}`,
-      }}>
+      <div className="av-toolbar">
         {/* Left: count badge */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: 8,
@@ -95,7 +103,7 @@ export function SecretsList({
         </div>
 
         {/* Right: filter + add */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexGrow: 1, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
           {/* Filter dropdown */}
           {allTags.length > 0 && (
             <div style={{ position: 'relative' }}>
@@ -103,7 +111,7 @@ export function SecretsList({
                 onClick={() => setFilterOpen(!filterOpen)}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 6,
-                  height: 32, paddingLeft: 10, paddingRight: 10,
+                  height: 44, paddingLeft: 10, paddingRight: 10,
                   background: 'rgba(255,255,255,0.04)',
                   border: `1px solid ${C.borderDefault}`,
                   borderRadius: 6,
@@ -178,214 +186,326 @@ export function SecretsList({
             onClick={onAddKey}
             whileHover={{ background: '#6b79e0' }}
             whileTap={{ scale: 0.97 }}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              height: 32, paddingLeft: 16, paddingRight: 16,
-              background: C.brandIndigo,
-              border: 'none', borderRadius: 6,
-              color: '#fff', fontSize: 13, fontWeight: 500,
-              cursor: 'pointer', fontFamily: "'Inter', sans-serif",
-              fontFeatureSettings: '"cv01","ss03"',
-            }}
+            className="av-add-btn"
+            style={{ background: C.brandIndigo }}
           >
             Add Key
           </motion.button>
         </div>
       </div>
 
-      {/* ── Table ── */}
-      {!isLoading && secrets.length === 0 ? (
+      {/* ── Content: loading / empty / data ── */}
+      {isLoading ? (
+        <>
+          {/* Mobile skeleton cards */}
+          <div className="av-card-view">
+            {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
+          </div>
+          {/* Desktop skeleton table */}
+          <div className="av-table-view">
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: `1px solid ${C.borderDefault}` }}>
+                  {['NAME', 'SERVICE', 'TAGS', 'ROTATED', 'STATUS', 'ACTIONS'].map((h) => (
+                    <th key={h} style={{
+                      padding: '10px 16px', textAlign: 'left',
+                      fontSize: 11, fontWeight: 600, letterSpacing: '0.05em',
+                      color: C.textSubtle, fontFamily: "'Inter', sans-serif",
+                      fontFeatureSettings: '"cv01","ss03"',
+                      whiteSpace: 'nowrap', textTransform: 'uppercase',
+                    }}>
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {Array.from({ length: 4 }).map((_, i) => <SkeletonRow key={i} />)}
+              </tbody>
+            </table>
+          </div>
+        </>
+      ) : secrets.length === 0 ? (
         /* Empty state */
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 0', gap: 16 }}>
           <div style={{ textAlign: 'center' }}>
-            <p style={{ color: C.textSubtle, fontSize: 14, fontFamily: "'Inter', sans-serif", fontFeatureSettings: '"cv01","ss03"' }}>
-              No secrets yet. Add your first key{' '}
-              <button
-                onClick={onAddKey}
-                style={{
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  color: C.brandIndigo, fontSize: 14, fontWeight: 500,
-                  fontFamily: "'Inter', sans-serif",
-                  padding: 0,
-                }}
-              >
-                →
-              </button>
+            <p style={{ color: C.textSubtle, fontSize: 14, fontFamily: "'Inter', sans-serif", fontFeatureSettings: '"cv01","ss03"', marginBottom: 12 }}>
+              No secrets yet
             </p>
+            <button
+              onClick={onAddKey}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '10px 20px',
+                background: C.brandIndigo,
+                border: 'none', borderRadius: 6,
+                cursor: 'pointer',
+                color: '#fff', fontSize: 13, fontWeight: 500,
+                fontFamily: "'Inter', sans-serif",
+                minHeight: 44,
+              }}
+            >
+              Add your first key →
+            </button>
           </div>
         </div>
       ) : (
-        <div style={{ width: '100%', overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: `1px solid ${C.borderDefault}` }}>
-                {['NAME', 'SERVICE', 'TAGS', 'ROTATED', 'STATUS', 'ACTIONS'].map((h) => (
-                  <th
-                    key={h}
-                    style={{
-                      padding: '10px 16px',
-                      textAlign: 'left',
-                      fontSize: 11,
-                      fontWeight: 600,
-                      letterSpacing: '0.05em',
-                      color: C.textSubtle,
-                      fontFamily: "'Inter', sans-serif",
-                      fontFeatureSettings: '"cv01","ss03"',
-                      whiteSpace: 'nowrap',
-                      textTransform: 'uppercase',
-                    }}
-                  >
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                Array.from({ length: 4 }).map((_, i) => <SkeletonRow key={i} />)
-              ) : filteredSecrets.length === 0 ? (
-                <tr>
-                  <td colSpan={6} style={{ padding: '40px 16px', textAlign: 'center', color: C.textSubtle, fontSize: 13, fontFamily: "'Inter', sans-serif" }}>
-                    No secrets match the selected filter
-                  </td>
-                </tr>
-              ) : (
-                filteredSecrets.map((secret, i) => (
-                  <motion.tr
-                    key={secret.id}
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.03, duration: 0.15 }}
-                    onHoverStart={() => setHoveredId(secret.id)}
-                    onHoverEnd={() => setHoveredId(null)}
-                    style={{
-                      borderBottom: `1px solid ${C.borderSubtle}`,
-                      background: hoveredId === secret.id ? 'rgba(255,255,255,0.02)' : 'transparent',
-                      transition: 'background 150ms ease',
-                      cursor: 'default',
-                    }}
-                  >
-                    {/* NAME */}
-                    <td style={{ padding: '12px 16px' }}>
+        <>
+          {/* ── Mobile card view ── */}
+          <div className="av-card-view">
+            {filteredSecrets.length === 0 ? (
+              <div style={{ padding: '40px 0', textAlign: 'center', color: C.textSubtle, fontSize: 13, fontFamily: "'Inter', sans-serif" }}>
+                No secrets match the selected filter
+              </div>
+            ) : (
+              filteredSecrets.map((secret, i) => (
+                <motion.div
+                  key={secret.id}
+                  className="av-card"
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.03, duration: 0.15 }}
+                >
+                  {/* Name */}
+                  <div className="av-card-name">{secret.name}</div>
+
+                  {/* Service + Status */}
+                  <div className="av-card-meta">
+                    <span style={{ color: C.textMuted, fontFamily: "'Inter', sans-serif" }}>{secret.service}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                      <div style={{
+                        width: 6, height: 6, borderRadius: '50%',
+                        background: secret.needs_rotation ? C.warning : C.success,
+                        flexShrink: 0,
+                      }} />
                       <span style={{
-                        fontFamily: "'JetBrains Mono', monospace",
                         fontSize: 13,
+                        color: secret.needs_rotation ? C.warning : C.success,
+                        fontFamily: "'Inter', sans-serif",
                         fontWeight: 500,
-                        color: C.textPrimary,
                       }}>
-                        {secret.name}
+                        {secret.needs_rotation ? 'Needs Rotation' : 'OK'}
                       </span>
-                    </td>
+                    </div>
+                  </div>
 
-                    {/* SERVICE */}
-                    <td style={{ padding: '12px 16px', fontSize: 13, color: C.textMuted, fontFamily: "'Inter', sans-serif", fontFeatureSettings: '"cv01","ss03"' }}>
-                      {secret.service}
-                    </td>
-
-                    {/* TAGS */}
-                    <td style={{ padding: '12px 16px' }}>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                        {secret.project_tags?.map((tag) => (
-                          <span
-                            key={tag}
-                            style={{
-                              padding: '2px 8px',
-                              background: 'transparent',
-                              border: `1px solid rgba(255,255,255,0.05)`,
-                              color: C.textMuted,
-                              fontSize: 12,
-                              fontWeight: 500,
-                              borderRadius: 9999,
-                              fontFamily: "'Inter', sans-serif",
-                              fontFeatureSettings: '"cv01","ss03"',
-                            }}
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    </td>
-
-                    {/* ROTATED */}
-                    <td style={{ padding: '12px 16px', fontSize: 13, color: C.textSubtle, fontFamily: "'Inter', sans-serif", fontFeatureSettings: '"cv01","ss03"', whiteSpace: 'nowrap' }}>
-                      {secret.last_rotated
-                        ? formatDistanceToNow(new Date(secret.last_rotated))
-                        : 'never'}
-                    </td>
-
-                    {/* STATUS */}
-                    <td style={{ padding: '12px 16px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <div style={{
-                          width: 6, height: 6, borderRadius: '50%',
-                          background: secret.needs_rotation ? C.warning : C.success,
-                          flexShrink: 0,
-                        }} />
-                        <span style={{
-                          fontSize: 13,
-                          color: secret.needs_rotation ? C.warning : C.success,
-                          fontFamily: "'Inter', sans-serif",
-                          fontFeatureSettings: '"cv01","ss03"',
-                          fontWeight: 500,
-                        }}>
-                          {secret.needs_rotation ? 'Needs Rotation' : 'OK'}
+                  {/* Tags */}
+                  {secret.project_tags && secret.project_tags.length > 0 && (
+                    <div className="av-card-tags">
+                      {secret.project_tags.map((tag) => (
+                        <span
+                          key={tag}
+                          style={{
+                            padding: '2px 8px',
+                            background: 'transparent',
+                            border: `1px solid rgba(255,255,255,0.05)`,
+                            color: C.textMuted,
+                            fontSize: 12, fontWeight: 500,
+                            borderRadius: 9999,
+                            fontFamily: "'Inter', sans-serif",
+                            fontFeatureSettings: '"cv01","ss03"',
+                          }}
+                        >
+                          {tag}
                         </span>
-                      </div>
-                    </td>
+                      ))}
+                    </div>
+                  )}
 
-                    {/* ACTIONS */}
-                    <td style={{ padding: '12px 16px' }}>
-                      <AnimatePresence>
-                        {hoveredId === secret.id && (
-                          <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: 0.1 }}
-                            style={{ display: 'flex', gap: 4, alignItems: 'center' }}
-                          >
-                            {[
-                              { label: 'View', icon: <Eye size={13} />, action: () => onReveal(secret), danger: false },
-                              { label: 'Edit', icon: <Pencil size={13} />, action: () => onEdit(secret), danger: false },
-                              { label: 'Rotate', icon: <RefreshCw size={13} />, action: () => onRotate(secret), danger: false },
-                              { label: 'Delete', icon: <Trash2 size={13} />, action: () => onDelete(secret), danger: true },
-                            ].map(({ label, icon, action, danger }) => (
-                              <button
-                                key={label}
-                                onClick={action}
-                                title={label}
-                                style={{
-                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                  width: 28, height: 28,
-                                  background: 'rgba(255,255,255,0.04)',
-                                  border: `1px solid ${C.borderDefault}`,
-                                  borderRadius: 6,
-                                  color: danger ? C.danger : C.textMuted,
-                                  cursor: 'pointer',
-                                  transition: 'all 150ms ease',
-                                }}
-                                onMouseEnter={e => {
-                                  (e.currentTarget as HTMLButtonElement).style.background = danger ? 'rgba(239,68,68,0.1)' : 'rgba(255,255,255,0.08)';
-                                  (e.currentTarget as HTMLButtonElement).style.color = danger ? C.danger : C.textPrimary;
-                                }}
-                                onMouseLeave={e => {
-                                  (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)';
-                                  (e.currentTarget as HTMLButtonElement).style.color = danger ? C.danger : C.textMuted;
-                                }}
-                              >
-                                {icon}
-                              </button>
-                            ))}
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+                  {/* Actions */}
+                  <div className="av-card-actions">
+                    {[
+                      { label: 'View', icon: <Eye size={15} />, action: () => onReveal(secret), danger: false },
+                      { label: 'Edit', icon: <Pencil size={15} />, action: () => onEdit(secret), danger: false },
+                      { label: 'Rotate', icon: <RefreshCw size={15} />, action: () => onRotate(secret), danger: false },
+                      { label: 'Delete', icon: <Trash2 size={15} />, action: () => onDelete(secret), danger: true },
+                    ].map(({ label, icon, action, danger }) => (
+                      <button
+                        key={label}
+                        onClick={action}
+                        title={label}
+                        className={`av-card-action-btn${danger ? ' danger' : ''}`}
+                      >
+                        {icon}
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+              ))
+            )}
+          </div>
+
+          {/* ── Desktop table view ── */}
+          <div className="av-table-view">
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: `1px solid ${C.borderDefault}` }}>
+                  {['NAME', 'SERVICE', 'TAGS', 'ROTATED', 'STATUS', 'ACTIONS'].map((h) => (
+                    <th
+                      key={h}
+                      style={{
+                        padding: '10px 16px',
+                        textAlign: 'left',
+                        fontSize: 11,
+                        fontWeight: 600,
+                        letterSpacing: '0.05em',
+                        color: C.textSubtle,
+                        fontFamily: "'Inter', sans-serif",
+                        fontFeatureSettings: '"cv01","ss03"',
+                        whiteSpace: 'nowrap',
+                        textTransform: 'uppercase',
+                      }}
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filteredSecrets.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} style={{ padding: '40px 16px', textAlign: 'center', color: C.textSubtle, fontSize: 13, fontFamily: "'Inter', sans-serif" }}>
+                      No secrets match the selected filter
                     </td>
-                  </motion.tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                  </tr>
+                ) : (
+                  filteredSecrets.map((secret, i) => (
+                    <motion.tr
+                      key={secret.id}
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.03, duration: 0.15 }}
+                      onHoverStart={() => setHoveredId(secret.id)}
+                      onHoverEnd={() => setHoveredId(null)}
+                      style={{
+                        borderBottom: `1px solid ${C.borderSubtle}`,
+                        background: hoveredId === secret.id ? 'rgba(255,255,255,0.02)' : 'transparent',
+                        transition: 'background 150ms ease',
+                        cursor: 'default',
+                      }}
+                    >
+                      {/* NAME */}
+                      <td style={{ padding: '12px 16px' }}>
+                        <span style={{
+                          fontFamily: "'JetBrains Mono', monospace",
+                          fontSize: 13,
+                          fontWeight: 500,
+                          color: C.textPrimary,
+                        }}>
+                          {secret.name}
+                        </span>
+                      </td>
+
+                      {/* SERVICE */}
+                      <td style={{ padding: '12px 16px', fontSize: 13, color: C.textMuted, fontFamily: "'Inter', sans-serif", fontFeatureSettings: '"cv01","ss03"' }}>
+                        {secret.service}
+                      </td>
+
+                      {/* TAGS */}
+                      <td style={{ padding: '12px 16px' }}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                          {secret.project_tags?.map((tag) => (
+                            <span
+                              key={tag}
+                              style={{
+                                padding: '2px 8px',
+                                background: 'transparent',
+                                border: `1px solid rgba(255,255,255,0.05)`,
+                                color: C.textMuted,
+                                fontSize: 12,
+                                fontWeight: 500,
+                                borderRadius: 9999,
+                                fontFamily: "'Inter', sans-serif",
+                                fontFeatureSettings: '"cv01","ss03"',
+                              }}
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+
+                      {/* ROTATED */}
+                      <td style={{ padding: '12px 16px', fontSize: 13, color: C.textSubtle, fontFamily: "'Inter', sans-serif", fontFeatureSettings: '"cv01","ss03"', whiteSpace: 'nowrap' }}>
+                        {secret.last_rotated
+                          ? formatDistanceToNow(new Date(secret.last_rotated))
+                          : 'never'}
+                      </td>
+
+                      {/* STATUS */}
+                      <td style={{ padding: '12px 16px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <div style={{
+                            width: 6, height: 6, borderRadius: '50%',
+                            background: secret.needs_rotation ? C.warning : C.success,
+                            flexShrink: 0,
+                          }} />
+                          <span style={{
+                            fontSize: 13,
+                            color: secret.needs_rotation ? C.warning : C.success,
+                            fontFamily: "'Inter', sans-serif",
+                            fontFeatureSettings: '"cv01","ss03"',
+                            fontWeight: 500,
+                          }}>
+                            {secret.needs_rotation ? 'Needs Rotation' : 'OK'}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* ACTIONS */}
+                      <td style={{ padding: '12px 16px' }}>
+                        <AnimatePresence>
+                          {hoveredId === secret.id && (
+                            <motion.div
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              transition={{ duration: 0.1 }}
+                              style={{ display: 'flex', gap: 4, alignItems: 'center' }}
+                            >
+                              {[
+                                { label: 'View', icon: <Eye size={13} />, action: () => onReveal(secret), danger: false },
+                                { label: 'Edit', icon: <Pencil size={13} />, action: () => onEdit(secret), danger: false },
+                                { label: 'Rotate', icon: <RefreshCw size={13} />, action: () => onRotate(secret), danger: false },
+                                { label: 'Delete', icon: <Trash2 size={13} />, action: () => onDelete(secret), danger: true },
+                              ].map(({ label, icon, action, danger }) => (
+                                <button
+                                  key={label}
+                                  onClick={action}
+                                  title={label}
+                                  style={{
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    width: 28, height: 28,
+                                    background: 'rgba(255,255,255,0.04)',
+                                    border: `1px solid ${C.borderDefault}`,
+                                    borderRadius: 6,
+                                    color: danger ? C.danger : C.textMuted,
+                                    cursor: 'pointer',
+                                    transition: 'all 150ms ease',
+                                  }}
+                                  onMouseEnter={e => {
+                                    (e.currentTarget as HTMLButtonElement).style.background = danger ? 'rgba(239,68,68,0.1)' : 'rgba(255,255,255,0.08)';
+                                    (e.currentTarget as HTMLButtonElement).style.color = danger ? C.danger : C.textPrimary;
+                                  }}
+                                  onMouseLeave={e => {
+                                    (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)';
+                                    (e.currentTarget as HTMLButtonElement).style.color = danger ? C.danger : C.textMuted;
+                                  }}
+                                >
+                                  {icon}
+                                </button>
+                              ))}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </td>
+                    </motion.tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       <style>{`

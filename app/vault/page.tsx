@@ -13,7 +13,7 @@ import { DeleteModal } from '@/components/DeleteModal';
 import { NewTokenModal } from '@/components/NewTokenModal';
 import { RevokeTokenModal } from '@/components/RevokeTokenModal';
 import { ToastManager } from '@/components/Toast';
-import { LogOut, Plus } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 
 // ─── Design tokens ───────────────────────────────────────────────────────────
 const C = {
@@ -231,114 +231,84 @@ export default function VaultPage() {
   return (
     <div style={{ minHeight: '100vh', background: C.pageBg, color: C.textPrimary, fontFamily: "'Inter', sans-serif", fontFeatureSettings: '"cv01", "ss03"' }}>
 
-      {/* ── Top Nav ── */}
-      <nav style={{
-        position: 'sticky', top: 0, zIndex: 30,
-        height: 48,
-        display: 'flex', alignItems: 'center',
-        borderBottom: `1px solid ${C.borderSubtle}`,
-        background: C.panelBg,
-        padding: '0 24px',
-        gap: 0,
-      }}>
-        {/* Left: monogram + wordmark */}
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{
-            width: 26, height: 26,
-            borderRadius: 6,
-            background: C.brandIndigo,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            flexShrink: 0,
-          }}>
-            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 700, color: '#fff', letterSpacing: '-0.02em', fontFeatureSettings: '"cv01", "ss03"' }}>AV</span>
+      {/* ── Top Nav (two-row on mobile, single-row on sm+) ── */}
+      <nav className="av-nav">
+        {/* Row 1: logo left, live dot + sign-out right */}
+        <div className="av-nav-row1">
+          {/* Left: monogram + wordmark + live dot (mobile: show here) */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{
+              width: 26, height: 26,
+              borderRadius: 6,
+              background: C.brandIndigo,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0,
+            }}>
+              <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 700, color: '#fff', letterSpacing: '-0.02em', fontFeatureSettings: '"cv01", "ss03"' }}>AV</span>
+            </div>
+            <span style={{ fontSize: 14, fontWeight: 500, color: C.textPrimary, letterSpacing: '-0.01em', fontFeatureSettings: '"cv01", "ss03"' }}>
+              Adam Vault
+            </span>
+            {/* Live dot — shown inline with wordmark on mobile */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 4 }}>
+              <div style={{ position: 'relative', width: 6, height: 6 }}>
+                <div style={{
+                  width: 6, height: 6, borderRadius: '50%',
+                  background: healthy ? C.success : C.danger,
+                  position: 'absolute',
+                }} />
+                {healthy && (
+                  <div style={{
+                    position: 'absolute', inset: -2,
+                    borderRadius: '50%',
+                    background: `rgba(16,185,129,0.3)`,
+                    animation: 'ping 2s ease-in-out infinite',
+                  }} />
+                )}
+              </div>
+            </div>
           </div>
-          <span style={{ fontSize: 14, fontWeight: 500, color: C.textPrimary, letterSpacing: '-0.01em', fontFeatureSettings: '"cv01", "ss03"' }}>
-            Adam Vault
-          </span>
+
+          {/* Right: desktop-only live text + sign out */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {/* "Live" text hidden on mobile, shown on sm+ via CSS */}
+            <span
+              className="av-live-text"
+              style={{ fontSize: 12, fontWeight: 500, color: healthy ? C.success : C.danger, fontFamily: "'Inter', sans-serif" }}
+            >
+              Live
+            </span>
+
+            <button
+              className="av-signout-btn"
+              onClick={handleSignOut}
+            >
+              <LogOut size={11} />
+              <span>Sign out</span>
+            </button>
+          </div>
         </div>
 
-        {/* Center: tabs */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        {/* Row 2: nav tabs (full width on mobile, centered compact on desktop) */}
+        <div className="av-nav-row2">
           {NAV_TABS.map(({ id, label }) => (
             <button
               key={id}
+              className="av-nav-tab"
               onClick={() => setView(id)}
               style={{
-                padding: '5px 12px',
-                borderRadius: 6,
-                border: 'none',
-                fontSize: 13,
-                fontWeight: 500,
-                cursor: 'pointer',
-                fontFamily: "'Inter', sans-serif",
-                fontFeatureSettings: '"cv01", "ss03"',
                 background: view === id ? 'rgba(255,255,255,0.06)' : 'transparent',
                 color: view === id ? C.textPrimary : C.textMuted,
-                transition: 'all 150ms ease',
               }}
             >
               {label}
             </button>
           ))}
         </div>
-
-        {/* Right: live indicator + sign out */}
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <div style={{ position: 'relative', width: 6, height: 6 }}>
-              <div style={{
-                width: 6, height: 6, borderRadius: '50%',
-                background: healthy ? C.success : C.danger,
-                position: 'absolute',
-              }} />
-              {healthy && (
-                <div style={{
-                  position: 'absolute', inset: -2,
-                  borderRadius: '50%',
-                  background: `rgba(16,185,129,0.3)`,
-                  animation: 'ping 2s ease-in-out infinite',
-                }} />
-              )}
-            </div>
-            <span style={{ fontSize: 12, fontWeight: 500, color: healthy ? C.success : C.danger, fontFamily: "'Inter', sans-serif" }}>
-              Live
-            </span>
-          </div>
-
-          <div style={{ width: 1, height: 16, background: C.borderDefault }} />
-
-          <button
-            onClick={handleSignOut}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 5,
-              height: 28, paddingLeft: 10, paddingRight: 10,
-              background: 'rgba(255,255,255,0.04)',
-              border: `1px solid ${C.borderDefault}`,
-              borderRadius: 6,
-              color: C.textMuted,
-              fontSize: 12, fontWeight: 500,
-              cursor: 'pointer',
-              fontFamily: "'Inter', sans-serif",
-              fontFeatureSettings: '"cv01", "ss03"',
-              transition: 'all 150ms ease',
-            }}
-            onMouseEnter={e => {
-              (e.currentTarget as HTMLButtonElement).style.color = C.textPrimary;
-              (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.07)';
-            }}
-            onMouseLeave={e => {
-              (e.currentTarget as HTMLButtonElement).style.color = C.textMuted;
-              (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)';
-            }}
-          >
-            <LogOut size={11} />
-            Sign out
-          </button>
-        </div>
       </nav>
 
       {/* ── Main Content ── */}
-      <main style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
+      <main className="av-main">
 
         {/* SECRETS */}
         {view === 'secrets' && (
@@ -445,6 +415,15 @@ export default function VaultPage() {
         @keyframes ping {
           0%, 100% { transform: scale(1); opacity: 0.3; }
           50% { transform: scale(1.6); opacity: 0; }
+        }
+        /* Hide "Live" text label on mobile — we only show the dot */
+        .av-live-text {
+          display: none;
+        }
+        @media (min-width: 640px) {
+          .av-live-text {
+            display: inline;
+          }
         }
       `}</style>
     </div>

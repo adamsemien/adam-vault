@@ -31,6 +31,30 @@ export interface AuditLogProps {
   isLoading?: boolean;
 }
 
+function SkeletonRow() {
+  return (
+    <tr>
+      {[80, 70, 120, 90].map((w, i) => (
+        <td key={i} style={{ padding: '10px 16px', borderBottom: `1px solid ${C.borderSubtle}` }}>
+          <div style={{ height: 12, width: w, borderRadius: 4, background: 'rgba(255,255,255,0.04)', animation: 'skeleton-pulse 1.5s ease-in-out infinite' }} />
+        </td>
+      ))}
+    </tr>
+  );
+}
+
+function SkeletonCard() {
+  return (
+    <div className="av-card">
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div style={{ height: 20, width: 60, borderRadius: 9999, background: 'rgba(255,255,255,0.04)', animation: 'skeleton-pulse 1.5s ease-in-out infinite' }} />
+        <div style={{ height: 12, width: 80, borderRadius: 4, background: 'rgba(255,255,255,0.04)', animation: 'skeleton-pulse 1.5s ease-in-out infinite' }} />
+      </div>
+      <div style={{ height: 12, width: 140, borderRadius: 4, background: 'rgba(255,255,255,0.04)', animation: 'skeleton-pulse 1.5s ease-in-out infinite' }} />
+    </div>
+  );
+}
+
 export function AuditLogComponent({ logs, onRefresh, isLoading = false }: AuditLogProps) {
   const [lastRefreshed, setLastRefreshed] = useState(Date.now());
   const [elapsed, setElapsed] = useState(0);
@@ -50,11 +74,7 @@ export function AuditLogComponent({ logs, onRefresh, isLoading = false }: AuditL
   return (
     <div>
       {/* ── Toolbar ── */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '12px 0',
-        borderBottom: `1px solid ${C.borderSubtle}`,
-      }}>
+      <div className="av-toolbar">
         <div style={{
           display: 'flex', alignItems: 'center', gap: 8,
           height: 26, paddingLeft: 10, paddingRight: 10,
@@ -76,12 +96,12 @@ export function AuditLogComponent({ logs, onRefresh, isLoading = false }: AuditL
             disabled={isLoading}
             style={{
               display: 'flex', alignItems: 'center', gap: 6,
-              height: 28, paddingLeft: 10, paddingRight: 10,
+              minHeight: 44, paddingLeft: 10, paddingRight: 10,
               background: 'rgba(255,255,255,0.04)',
               border: `1px solid ${C.borderDefault}`,
               borderRadius: 6,
               color: C.textMuted,
-              fontSize: 12, fontWeight: 500,
+              fontSize: 13, fontWeight: 500,
               cursor: isLoading ? 'not-allowed' : 'pointer',
               opacity: isLoading ? 0.6 : 1,
               fontFamily: "'Inter', sans-serif",
@@ -101,95 +121,164 @@ export function AuditLogComponent({ logs, onRefresh, isLoading = false }: AuditL
         </div>
       </div>
 
-      {/* ── Table ── */}
-      <div style={{ width: '100%', overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom: `1px solid ${C.borderDefault}` }}>
-              {['TIME', 'ACTION', 'KEY', 'SOURCE'].map((h) => (
-                <th
-                  key={h}
-                  style={{
-                    padding: '10px 16px',
-                    textAlign: 'left',
-                    fontSize: 11,
-                    fontWeight: 600,
-                    letterSpacing: '0.05em',
-                    color: C.textSubtle,
-                    fontFamily: "'Inter', sans-serif",
-                    fontFeatureSettings: '"cv01","ss03"',
-                    whiteSpace: 'nowrap',
-                    textTransform: 'uppercase',
-                  }}
+      {/* ── Content ── */}
+      {isLoading && logs.length === 0 ? (
+        <>
+          <div className="av-card-view">
+            {Array.from({ length: 5 }).map((_, i) => <SkeletonCard key={i} />)}
+          </div>
+          <div className="av-table-view">
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: `1px solid ${C.borderDefault}` }}>
+                  {['TIME', 'ACTION', 'KEY', 'SOURCE'].map((h) => (
+                    <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 600, letterSpacing: '0.05em', color: C.textSubtle, fontFamily: "'Inter', sans-serif", fontFeatureSettings: '"cv01","ss03"', whiteSpace: 'nowrap', textTransform: 'uppercase' }}>
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)}
+              </tbody>
+            </table>
+          </div>
+        </>
+      ) : logs.length === 0 ? (
+        <div style={{ padding: '80px 0', textAlign: 'center', color: C.textSubtle, fontSize: 14, fontFamily: "'Inter', sans-serif" }}>
+          No audit logs yet
+        </div>
+      ) : (
+        <>
+          {/* ── Mobile card view ── */}
+          <div className="av-card-view">
+            {logs.map((log, i) => {
+              const style = ACTION_STYLES[log.action] || ACTION_STYLES.viewed;
+              return (
+                <motion.div
+                  key={log.id}
+                  className="av-card"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: i * 0.02 }}
                 >
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {logs.length === 0 ? (
-              <tr>
-                <td colSpan={4} style={{ padding: '48px 16px', textAlign: 'center', color: C.textSubtle, fontSize: 13, fontFamily: "'Inter', sans-serif", fontFeatureSettings: '"cv01","ss03"' }}>
-                  No audit logs yet
-                </td>
-              </tr>
-            ) : (
-              logs.map((log, i) => {
-                const style = ACTION_STYLES[log.action] || ACTION_STYLES.viewed;
-                return (
-                  <motion.tr
-                    key={log.id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: i * 0.02 }}
-                    style={{
-                      borderBottom: `1px solid ${C.borderSubtle}`,
-                    }}
-                  >
-                    {/* TIME */}
-                    <td style={{ padding: '10px 16px', fontSize: 12, color: C.textSubtle, fontFamily: "'JetBrains Mono', monospace", whiteSpace: 'nowrap' }}>
+                  {/* Action + Time */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    <span style={{
+                      padding: '2px 8px', borderRadius: 9999,
+                      fontSize: 12, fontWeight: 500,
+                      background: style.bg, color: style.color,
+                      fontFamily: "'Inter', sans-serif",
+                    }}>
+                      {log.action}
+                    </span>
+                    <span style={{ fontSize: 12, color: C.textSubtle, fontFamily: "'JetBrains Mono', monospace" }}>
                       {formatDistanceToNow(new Date(log.timestamp))}
-                    </td>
+                    </span>
+                  </div>
 
-                    {/* ACTION */}
-                    <td style={{ padding: '10px 16px' }}>
-                      <span style={{
-                        padding: '2px 8px',
-                        borderRadius: 9999,
-                        fontSize: 12, fontWeight: 500,
-                        background: style.bg,
-                        color: style.color,
+                  {/* Key ID */}
+                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: C.textMuted }}>
+                    {log.secret_id}
+                  </div>
+
+                  {/* Source */}
+                  <div style={{ fontSize: 13, color: C.textMuted, fontFamily: "'Inter', sans-serif" }}>
+                    {log.token_name || 'Dashboard'}
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+
+          {/* ── Desktop table view ── */}
+          <div className="av-table-view">
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: `1px solid ${C.borderDefault}` }}>
+                  {['TIME', 'ACTION', 'KEY', 'SOURCE'].map((h) => (
+                    <th
+                      key={h}
+                      style={{
+                        padding: '10px 16px',
+                        textAlign: 'left',
+                        fontSize: 11,
+                        fontWeight: 600,
+                        letterSpacing: '0.05em',
+                        color: C.textSubtle,
                         fontFamily: "'Inter', sans-serif",
                         fontFeatureSettings: '"cv01","ss03"',
-                        letterSpacing: '0.01em',
-                      }}>
-                        {log.action}
-                      </span>
-                    </td>
+                        whiteSpace: 'nowrap',
+                        textTransform: 'uppercase',
+                      }}
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {logs.map((log, i) => {
+                  const style = ACTION_STYLES[log.action] || ACTION_STYLES.viewed;
+                  return (
+                    <motion.tr
+                      key={log.id}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: i * 0.02 }}
+                      style={{ borderBottom: `1px solid ${C.borderSubtle}` }}
+                    >
+                      {/* TIME */}
+                      <td style={{ padding: '10px 16px', fontSize: 12, color: C.textSubtle, fontFamily: "'JetBrains Mono', monospace", whiteSpace: 'nowrap' }}>
+                        {formatDistanceToNow(new Date(log.timestamp))}
+                      </td>
 
-                    {/* KEY */}
-                    <td style={{ padding: '10px 16px' }}>
-                      <span style={{
-                        fontFamily: "'JetBrains Mono', monospace",
-                        fontSize: 12, color: C.textMuted,
-                        letterSpacing: '0.02em',
-                      }}>
-                        {log.secret_id}
-                      </span>
-                    </td>
+                      {/* ACTION */}
+                      <td style={{ padding: '10px 16px' }}>
+                        <span style={{
+                          padding: '2px 8px',
+                          borderRadius: 9999,
+                          fontSize: 12, fontWeight: 500,
+                          background: style.bg,
+                          color: style.color,
+                          fontFamily: "'Inter', sans-serif",
+                          fontFeatureSettings: '"cv01","ss03"',
+                          letterSpacing: '0.01em',
+                        }}>
+                          {log.action}
+                        </span>
+                      </td>
 
-                    {/* SOURCE */}
-                    <td style={{ padding: '10px 16px', fontSize: 13, color: C.textMuted, fontFamily: "'Inter', sans-serif", fontFeatureSettings: '"cv01","ss03"' }}>
-                      {log.token_name || 'Dashboard'}
-                    </td>
-                  </motion.tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+                      {/* KEY */}
+                      <td style={{ padding: '10px 16px' }}>
+                        <span style={{
+                          fontFamily: "'JetBrains Mono', monospace",
+                          fontSize: 12, color: C.textMuted,
+                          letterSpacing: '0.02em',
+                        }}>
+                          {log.secret_id}
+                        </span>
+                      </td>
+
+                      {/* SOURCE */}
+                      <td style={{ padding: '10px 16px', fontSize: 13, color: C.textMuted, fontFamily: "'Inter', sans-serif", fontFeatureSettings: '"cv01","ss03"' }}>
+                        {log.token_name || 'Dashboard'}
+                      </td>
+                    </motion.tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+
+      <style>{`
+        @keyframes skeleton-pulse {
+          0%, 100% { opacity: 0.5; }
+          50% { opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 }

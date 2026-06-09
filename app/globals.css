@@ -108,3 +108,362 @@ body {
 .animate-skeleton {
   animation: skeleton-pulse 1.5s ease-in-out infinite;
 }
+
+/* ─── Nav responsive layout ──────────────────────────────────────────────── */
+
+/* Mobile nav: two rows */
+.av-nav {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: #0f1011;
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  padding: 0;
+}
+
+.av-nav-row1 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  height: 48px;
+  width: 100%;
+}
+
+.av-nav-row2 {
+  display: flex;
+  align-items: center;
+  justify-content: stretch;
+  padding: 0 16px 8px;
+  gap: 4px;
+}
+
+.av-nav-tab {
+  flex: 1;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  border: none;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-feature-settings: "cv01", "ss03";
+  transition: all 150ms ease;
+}
+
+.av-live-dot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Desktop nav: single row */
+@media (min-width: 640px) {
+  .av-nav {
+    flex-direction: row;
+    align-items: center;
+    height: 48px;
+    padding: 0 24px;
+    gap: 0;
+  }
+
+  .av-nav-row1 {
+    flex: 1;
+    padding: 0;
+    height: 48px;
+    justify-content: flex-start;
+  }
+
+  .av-nav-row2 {
+    padding: 0;
+    flex: none;
+    justify-content: center;
+  }
+
+  .av-nav-tab {
+    flex: none;
+    min-height: auto;
+    padding: 5px 12px;
+  }
+
+  .av-live-dot {
+    display: flex;
+  }
+}
+
+/* ─── Main container responsive padding ─────────────────────────────────── */
+
+.av-main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+@media (min-width: 640px) {
+  .av-main {
+    padding: 0 24px;
+  }
+}
+
+/* ─── Toolbar responsive ─────────────────────────────────────────────────── */
+
+.av-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.av-add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 44px;
+  width: 100%;
+  padding-left: 16px;
+  padding-right: 16px;
+  border-radius: 6px;
+  border: none;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-feature-settings: "cv01", "ss03";
+  background: #5e6ad2;
+}
+
+@media (min-width: 640px) {
+  .av-toolbar {
+    flex-wrap: nowrap;
+  }
+
+  .av-add-btn {
+    width: auto;
+    height: 32px;
+  }
+}
+
+/* ─── Table vs Card layout ───────────────────────────────────────────────── */
+
+/* Hide table on mobile, show cards */
+.av-table-view {
+  display: none;
+}
+
+.av-card-view {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 0;
+}
+
+@media (min-width: 640px) {
+  .av-table-view {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .av-card-view {
+    display: none;
+  }
+}
+
+/* ─── Secret/Token/Audit card ────────────────────────────────────────────── */
+
+.av-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.av-card-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  color: #f7f8f8;
+  word-break: break-all;
+}
+
+.av-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 13px;
+}
+
+.av-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.av-card-actions {
+  display: flex;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.av-card-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 44px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.av-card-action-btn.danger {
+  color: #ef4444;
+}
+
+.av-card-action-btn:not(.danger) {
+  color: #8a8f98;
+}
+
+.av-card-action-btn:hover:not(.danger) {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f7f8f8;
+}
+
+.av-card-action-btn.danger:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* ─── Touch targets for table action buttons ─────────────────────────────── */
+
+.av-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+@media (min-width: 640px) {
+  .av-icon-btn {
+    min-width: 28px;
+    min-height: 28px;
+    width: 28px;
+    height: 28px;
+  }
+}
+
+/* ─── Slide-in panel (SecretModal) ───────────────────────────────────────── */
+
+.av-panel {
+  position: fixed;
+  right: 0;
+  top: 0;
+  height: 100vh;
+  width: 100%;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 640px) {
+  .av-panel {
+    width: 400px;
+  }
+}
+
+/* ─── Modals: full width on mobile ───────────────────────────────────────── */
+
+.av-modal-content {
+  width: calc(100% - 32px);
+  max-width: 100%;
+}
+
+@media (min-width: 640px) {
+  .av-modal-content {
+    width: 100%;
+    max-width: 380px;
+  }
+}
+
+.av-modal-content-lg {
+  width: calc(100% - 32px);
+  max-width: 100%;
+}
+
+@media (min-width: 640px) {
+  .av-modal-content-lg {
+    width: 100%;
+    max-width: 400px;
+  }
+}
+
+/* ─── Min touch target on interactive elements ───────────────────────────── */
+
+.av-touch {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+@media (min-width: 640px) {
+  .av-touch {
+    min-height: auto;
+  }
+}
+
+/* ─── Sign out button touch target on mobile ─────────────────────────────── */
+
+.av-signout-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 44px;
+  min-width: 44px;
+  padding-left: 10px;
+  padding-right: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  color: #8a8f98;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-feature-settings: "cv01", "ss03";
+  transition: all 150ms ease;
+  justify-content: center;
+}
+
+@media (min-width: 640px) {
+  .av-signout-btn {
+    min-height: 28px;
+    height: 28px;
+  }
+}
+
+.av-signout-btn:hover {
+  color: #f7f8f8;
+  background: rgba(255, 255, 255, 0.07);
+}

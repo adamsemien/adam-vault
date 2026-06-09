@@ -151,17 +151,14 @@ export function SecretModal({
           {/* Slide-in panel */}
           <motion.div
             key="panel"
-            initial={{ x: 400 }}
+            initial={{ x: '100%' }}
             animate={{ x: 0 }}
-            exit={{ x: 400 }}
+            exit={{ x: '100%' }}
             transition={{ type: 'spring', stiffness: 350, damping: 34 }}
+            className="av-panel"
             style={{
-              position: 'fixed', right: 0, top: 0,
-              height: '100vh', width: 400,
               background: C.panelBg,
               borderLeft: `1px solid ${C.borderDefault}`,
-              zIndex: 50,
-              display: 'flex', flexDirection: 'column',
               boxShadow: '-24px 0 80px rgba(0,0,0,0.5)',
             }}
           >

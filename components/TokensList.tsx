@@ -44,17 +44,25 @@ function SkeletonRow() {
   );
 }
 
+function SkeletonCard() {
+  return (
+    <div className="av-card">
+      <div style={{ height: 14, width: 140, borderRadius: 4, background: 'rgba(255,255,255,0.04)', animation: 'skeleton-pulse 1.5s ease-in-out infinite' }} />
+      <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ height: 12, width: 80, borderRadius: 4, background: 'rgba(255,255,255,0.04)', animation: 'skeleton-pulse 1.5s ease-in-out infinite' }} />
+        <div style={{ height: 12, width: 50, borderRadius: 4, background: 'rgba(255,255,255,0.04)', animation: 'skeleton-pulse 1.5s ease-in-out infinite' }} />
+      </div>
+    </div>
+  );
+}
+
 export function TokensList({ tokens, onRevoke, isLoading = false, onCreateToken }: TokensListProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   return (
     <div>
       {/* ── Toolbar ── */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '12px 0',
-        borderBottom: `1px solid ${C.borderSubtle}`,
-      }}>
+      <div className="av-toolbar">
         <div style={{
           display: 'flex', alignItems: 'center', gap: 8,
           height: 26, paddingLeft: 10, paddingRight: 10,
@@ -71,23 +79,39 @@ export function TokensList({ tokens, onRevoke, isLoading = false, onCreateToken 
           onClick={onCreateToken}
           whileHover={{ background: '#6b79e0' }}
           whileTap={{ scale: 0.97 }}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            height: 32, paddingLeft: 16, paddingRight: 16,
-            background: C.brandIndigo,
-            border: 'none', borderRadius: 6,
-            color: '#fff', fontSize: 13, fontWeight: 500,
-            cursor: 'pointer', fontFamily: "'Inter', sans-serif",
-            fontFeatureSettings: '"cv01","ss03"',
-          }}
+          className="av-add-btn"
+          style={{ background: C.brandIndigo }}
         >
           <Plus size={13} />
           New Token
         </motion.button>
       </div>
 
-      {/* ── Empty state ── */}
-      {!isLoading && tokens.length === 0 ? (
+      {/* ── Content ── */}
+      {isLoading ? (
+        <>
+          <div className="av-card-view">
+            {Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}
+          </div>
+          <div className="av-table-view">
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: `1px solid ${C.borderDefault}` }}>
+                  {['NAME', 'SCOPED TAGS', 'PREFIX', 'LAST USED', 'STATUS', 'ACTIONS'].map((h) => (
+                    <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 600, letterSpacing: '0.05em', color: C.textSubtle, fontFamily: "'Inter', sans-serif", fontFeatureSettings: '"cv01","ss03"', whiteSpace: 'nowrap', textTransform: 'uppercase' }}>
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {Array.from({ length: 3 }).map((_, i) => <SkeletonRow key={i} />)}
+              </tbody>
+            </table>
+          </div>
+        </>
+      ) : tokens.length === 0 ? (
+        /* Empty state */
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 0', gap: 16 }}>
           <div style={{
             width: 40, height: 40, borderRadius: 10,
@@ -98,48 +122,146 @@ export function TokensList({ tokens, onRevoke, isLoading = false, onCreateToken 
             <Key size={18} style={{ color: C.textSubtle }} />
           </div>
           <div style={{ textAlign: 'center' }}>
-            <p style={{ color: C.textSubtle, fontSize: 14, fontFamily: "'Inter', sans-serif", fontFeatureSettings: '"cv01","ss03"' }}>
-              No tokens yet.{' '}
-              <button
-                onClick={onCreateToken}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.brandIndigo, fontSize: 14, fontWeight: 500, fontFamily: "'Inter', sans-serif", padding: 0 }}
-              >
-                Create one →
-              </button>
+            <p style={{ color: C.textSubtle, fontSize: 14, fontFamily: "'Inter', sans-serif", fontFeatureSettings: '"cv01","ss03"', marginBottom: 12 }}>
+              No tokens yet
             </p>
+            <button
+              onClick={onCreateToken}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '10px 20px',
+                background: C.brandIndigo,
+                border: 'none', borderRadius: 6,
+                cursor: 'pointer',
+                color: '#fff', fontSize: 13, fontWeight: 500,
+                fontFamily: "'Inter', sans-serif",
+                minHeight: 44,
+              }}
+            >
+              Create one →
+            </button>
           </div>
         </div>
       ) : (
-        <div style={{ width: '100%', overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: `1px solid ${C.borderDefault}` }}>
-                {['NAME', 'SCOPED TAGS', 'PREFIX', 'LAST USED', 'STATUS', 'ACTIONS'].map((h) => (
-                  <th
-                    key={h}
-                    style={{
-                      padding: '10px 16px',
-                      textAlign: 'left',
-                      fontSize: 11,
-                      fontWeight: 600,
-                      letterSpacing: '0.05em',
-                      color: C.textSubtle,
-                      fontFamily: "'Inter', sans-serif",
-                      fontFeatureSettings: '"cv01","ss03"',
-                      whiteSpace: 'nowrap',
-                      textTransform: 'uppercase',
-                    }}
-                  >
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                Array.from({ length: 3 }).map((_, i) => <SkeletonRow key={i} />)
-              ) : (
-                tokens.map((token, i) => (
+        <>
+          {/* ── Mobile card view ── */}
+          <div className="av-card-view">
+            {tokens.map((token, i) => (
+              <motion.div
+                key={token.id}
+                className="av-card"
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.03, duration: 0.15 }}
+                style={{ opacity: token.revoked ? 0.4 : 1 }}
+              >
+                {/* Name */}
+                <div style={{
+                  fontSize: 13, fontWeight: 700, color: C.textPrimary,
+                  fontFamily: "'Inter', sans-serif",
+                  textDecoration: token.revoked ? 'line-through' : 'none',
+                }}>
+                  {token.name}
+                </div>
+
+                {/* Prefix + Status */}
+                <div className="av-card-meta">
+                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: C.textMuted }}>
+                    {token.token_prefix}…
+                  </span>
+                  <span style={{
+                    padding: '2px 8px', borderRadius: 9999,
+                    fontSize: 12, fontWeight: 500,
+                    background: token.revoked ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)',
+                    color: token.revoked ? C.danger : C.success,
+                    fontFamily: "'Inter', sans-serif",
+                  }}>
+                    {token.revoked ? 'Revoked' : 'Active'}
+                  </span>
+                </div>
+
+                {/* Tags */}
+                {token.allowed_tags && token.allowed_tags.length > 0 && (
+                  <div className="av-card-tags">
+                    {token.allowed_tags.map((tag) => (
+                      <span
+                        key={tag}
+                        style={{
+                          padding: '2px 8px',
+                          background: 'transparent',
+                          border: '1px solid rgba(255,255,255,0.05)',
+                          color: C.textMuted,
+                          fontSize: 12, fontWeight: 500,
+                          borderRadius: 9999,
+                          fontFamily: "'Inter', sans-serif",
+                        }}
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Last used */}
+                <div style={{ fontSize: 13, color: C.textSubtle, fontFamily: "'Inter', sans-serif" }}>
+                  Last used: {token.last_used ? formatDistanceToNow(new Date(token.last_used)) : 'never'}
+                </div>
+
+                {/* Revoke action */}
+                {!token.revoked && (
+                  <div style={{ paddingTop: 4 }}>
+                    <button
+                      onClick={() => onRevoke(token)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 5,
+                        width: '100%', minHeight: 44, justifyContent: 'center',
+                        background: 'rgba(239,68,68,0.08)',
+                        border: '1px solid rgba(239,68,68,0.2)',
+                        borderRadius: 6,
+                        color: C.danger,
+                        fontSize: 13, fontWeight: 500,
+                        cursor: 'pointer',
+                        fontFamily: "'Inter', sans-serif",
+                        transition: 'all 150ms ease',
+                      }}
+                    >
+                      <Trash2 size={13} />
+                      Revoke
+                    </button>
+                  </div>
+                )}
+              </motion.div>
+            ))}
+          </div>
+
+          {/* ── Desktop table view ── */}
+          <div className="av-table-view">
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: `1px solid ${C.borderDefault}` }}>
+                  {['NAME', 'SCOPED TAGS', 'PREFIX', 'LAST USED', 'STATUS', 'ACTIONS'].map((h) => (
+                    <th
+                      key={h}
+                      style={{
+                        padding: '10px 16px',
+                        textAlign: 'left',
+                        fontSize: 11,
+                        fontWeight: 600,
+                        letterSpacing: '0.05em',
+                        color: C.textSubtle,
+                        fontFamily: "'Inter', sans-serif",
+                        fontFeatureSettings: '"cv01","ss03"',
+                        whiteSpace: 'nowrap',
+                        textTransform: 'uppercase',
+                      }}
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {tokens.map((token, i) => (
                   <motion.tr
                     key={token.id}
                     initial={{ opacity: 0, y: 4 }}
@@ -255,11 +377,11 @@ export function TokensList({ tokens, onRevoke, isLoading = false, onCreateToken 
                       </AnimatePresence>
                     </td>
                   </motion.tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       <style>{`
