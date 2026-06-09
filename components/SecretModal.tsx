@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Drawer } from 'vaul';
 import { X, Plus } from 'lucide-react';
 import { Secret } from '@/types';
 import { useIsMobile } from '@/lib/use-mobile';
@@ -407,32 +406,7 @@ export function SecretModal({
     </div>
   );
 
-  // ─── Mobile: vaul Drawer from bottom ──────────────────────────────────────
-  if (isMobile) {
-    return (
-      <Drawer.Root open={open} onOpenChange={(v) => !v && onClose()} snapPoints={[0.92]}>
-        <Drawer.Portal>
-          <Drawer.Overlay className="fixed inset-0 bg-black/60 z-40" />
-          <Drawer.Content
-            className="fixed bottom-0 left-0 right-0 z-50 flex flex-col rounded-t-[12px] outline-none"
-            style={{
-              background: '#0f1011',
-              borderTop: '1px solid rgba(255,255,255,0.08)',
-              paddingBottom: 'env(safe-area-inset-bottom)',
-              maxHeight: '92vh',
-            }}
-          >
-            {/* Drag handle */}
-            <div className="mx-auto mt-3 h-1 w-10 rounded-full" style={{ background: 'rgba(255,255,255,0.15)' }} />
-            {header}
-            {formContent}
-          </Drawer.Content>
-        </Drawer.Portal>
-      </Drawer.Root>
-    );
-  }
-
-  // ─── Desktop: slide-in panel from right ──────────────────────────────────
+  // ─── Mobile + Desktop: Framer Motion panel (full-screen on mobile, right panel on desktop) ──
   return (
     <AnimatePresence>
       {open && (
@@ -453,18 +427,33 @@ export function SecretModal({
             }}
           />
 
-          {/* Slide-in panel */}
+          {/* Slide-in panel — full screen on mobile, right panel on desktop */}
           <motion.div
             key="panel"
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
+            initial={isMobile ? { y: '100%' } : { x: '100%' }}
+            animate={isMobile ? { y: 0 } : { x: 0 }}
+            exit={isMobile ? { y: '100%' } : { x: '100%' }}
             transition={{ type: 'spring', stiffness: 350, damping: 34 }}
-            className="av-panel"
             style={{
+              position: 'fixed',
+              zIndex: 50,
+              display: 'flex',
+              flexDirection: 'column',
               background: C.panelBg,
-              borderLeft: `1px solid ${C.borderDefault}`,
-              boxShadow: '-24px 0 80px rgba(0,0,0,0.5)',
+              ...(isMobile
+                ? {
+                    inset: 0,
+                    borderTop: `1px solid ${C.borderDefault}`,
+                    paddingBottom: 'env(safe-area-inset-bottom)',
+                  }
+                : {
+                    top: 0,
+                    right: 0,
+                    bottom: 0,
+                    width: 420,
+                    borderLeft: `1px solid ${C.borderDefault}`,
+                    boxShadow: '-24px 0 80px rgba(0,0,0,0.5)',
+                  }),
             }}
           >
             {header}

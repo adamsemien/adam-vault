@@ -134,11 +134,13 @@ export default function VaultPage() {
   }, [api]);
 
   useEffect(() => {
-    fetchUser();
-    fetchSecrets();
-    fetchTokens();
-    fetchAuditLogs();
-    fetchHealth();
+    let mounted = true;
+    const init = async () => {
+      if (!mounted) return;
+      await Promise.all([fetchUser(), fetchSecrets(), fetchTokens(), fetchAuditLogs(), fetchHealth()]);
+    };
+    init();
+    return () => { mounted = false; };
   }, [fetchUser, fetchSecrets, fetchTokens, fetchAuditLogs, fetchHealth]);
 
   useEffect(() => {
