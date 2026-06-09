@@ -1,42 +1,35 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const router = useRouter();
+
+  const EMAIL = 'adamsemien@gmail.com';
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
     setError('');
-    setSuccess('');
 
     try {
-      // Validate email is the allowed one
-      const allowedEmail = 'adamsemien@gmail.com';
-      if (email !== allowedEmail) {
-        throw new Error(`Only ${allowedEmail} is allowed to access this vault`);
-      }
-
-      // Send magic link via Supabase
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email: EMAIL, password }),
       });
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || 'Login failed');
+        throw new Error(data.error || 'Invalid password');
       }
 
-      setSuccess('Magic link sent! Check your email.');
-      setEmail('');
+      // Redirect to vault on success
+      window.location.href = '/vault';
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -45,56 +38,124 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
-      <div className="w-full max-w-md bg-slate-800 rounded-lg shadow-xl p-8 border border-slate-700">
-        <h1 className="text-3xl font-bold mb-2 text-center text-white">Adam Vault</h1>
-        <p className="text-center text-slate-400 mb-6">Secure secrets management</p>
+    <div
+      style={{ backgroundColor: '#08090a' }}
+      className="flex items-center justify-center min-h-screen"
+    >
+      <div
+        style={{
+          backgroundColor: 'rgba(255,255,255,0.02)',
+          border: '1px solid rgba(255,255,255,0.08)',
+        }}
+        className="w-full max-w-sm rounded-xl p-8"
+      >
+        {/* Logo / Title */}
+        <div className="mb-8 text-center">
+          <div className="inline-flex items-center justify-center w-10 h-10 rounded-lg mb-4"
+            style={{ backgroundColor: '#5e6ad2' }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </div>
+          <h1 className="text-xl font-semibold text-white tracking-tight">Adam Vault</h1>
+          <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>
+            Enter your password to continue
+          </p>
+        </div>
 
         {error && (
-          <div className="mb-4 p-4 bg-red-500/10 border border-red-500/50 rounded text-red-200 text-sm">
+          <div
+            className="mb-5 px-4 py-3 rounded-lg text-sm"
+            style={{
+              backgroundColor: 'rgba(239,68,68,0.08)',
+              border: '1px solid rgba(239,68,68,0.2)',
+              color: '#fca5a5',
+            }}
+          >
             {error}
           </div>
         )}
 
-        {success && (
-          <div className="mb-4 p-4 bg-green-500/10 border border-green-500/50 rounded text-green-200 text-sm">
-            {success}
-          </div>
-        )}
-
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Email — readonly */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Email Address
+            <label
+              className="block text-xs font-medium mb-1.5"
+              style={{ color: 'rgba(255,255,255,0.4)' }}
+            >
+              Email
             </label>
             <input
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              placeholder="adamsemien@gmail.com"
-              required
-              disabled={loading}
+              value={EMAIL}
+              readOnly
+              className="w-full px-3 py-2.5 rounded-lg text-sm outline-none"
+              style={{
+                backgroundColor: 'rgba(255,255,255,0.02)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                color: 'rgba(255,255,255,0.5)',
+                cursor: 'default',
+              }}
             />
-            <p className="text-xs text-slate-500 mt-1">
-              Only adamsemien@gmail.com has access
-            </p>
           </div>
 
+          {/* Password */}
+          <div>
+            <label
+              className="block text-xs font-medium mb-1.5"
+              style={{ color: 'rgba(255,255,255,0.4)' }}
+            >
+              Password
+            </label>
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-3 py-2.5 pr-10 rounded-lg text-sm text-white outline-none transition-colors"
+                style={{
+                  backgroundColor: 'rgba(255,255,255,0.02)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = '#5e6ad2';
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
+                }}
+                placeholder="••••••••"
+                required
+                autoFocus
+                disabled={loading}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 flex items-center px-3 transition-colors"
+                style={{ color: 'rgba(255,255,255,0.3)' }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = 'rgba(255,255,255,0.7)')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(255,255,255,0.3)')}
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+          </div>
+
+          {/* Submit */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600/50 rounded font-semibold text-white transition-colors"
+            className="w-full py-2.5 rounded-lg text-sm font-medium text-white transition-opacity mt-2"
+            style={{
+              backgroundColor: '#5e6ad2',
+              opacity: loading ? 0.6 : 1,
+            }}
           >
-            {loading ? 'Sending magic link...' : 'Send Magic Link'}
+            {loading ? 'Signing in…' : 'Sign In'}
           </button>
         </form>
-
-        <div className="mt-6 pt-6 border-t border-slate-700">
-          <p className="text-xs text-slate-500 text-center">
-            A passwordless magic link will be sent to your email. Click it to sign in securely.
-          </p>
-        </div>
       </div>
     </div>
   );

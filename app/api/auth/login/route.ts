@@ -5,11 +5,11 @@ const ALLOWED_EMAIL = 'adamsemien@gmail.com';
 
 export async function POST(req: NextRequest) {
   try {
-    const { email } = await req.json();
+    const { email, password } = await req.json();
 
-    if (!email) {
+    if (!email || !password) {
       return NextResponse.json(
-        { error: 'Email is required' },
+        { error: 'Email and password are required' },
         { status: 400 }
       );
     }
@@ -22,26 +22,32 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Send magic link via Supabase Auth
-    const { error } = await supabase.auth.signInWithOtp({
+    // Sign in with password
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
-      options: {
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback`,
-      },
+      password,
     });
 
-    if (error) {
+    if (error || !data.session) {
       console.error('Supabase auth error:', error);
       return NextResponse.json(
-        { error: 'Failed to send magic link' },
-        { status: 500 }
+        { error: error?.message ?? 'Invalid email or password' },
+        { status: 401 }
       );
     }
 
-    return NextResponse.json(
-      { message: 'Magic link sent to email' },
-      { status: 200 }
-    );
+    // Build redirect response and set session cookie
+    const response = NextResponse.json({ ok: true }, { status: 200 });
+
+    response.cookies.set('sb-auth-token', data.session.access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: '/',
+    });
+
+    return response;
   } catch (error) {
     console.error('POST /api/auth/login:', error);
     return NextResponse.json(
