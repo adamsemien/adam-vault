@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
         name: tokenRecord.name,
         token_prefix: tokenRecord.token_prefix,
         allowed_tags: tokenRecord.allowed_tags,
-        full_token: token, // Only returned once at creation
+        token: token, // Only returned once at creation
       },
       { status: 201 }
     );

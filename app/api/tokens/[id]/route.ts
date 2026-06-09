@@ -3,10 +3,10 @@ import { supabase } from '@/lib/supabase';
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = (await Promise.resolve(params)).id;
+    const { id } = await params;
 
     // Check auth - dashboard session only
     const hasSession = req.cookies.get('sb-auth-token');

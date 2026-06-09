@@ -12,10 +12,25 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="bg-gradient-to-br from-slate-900 to-slate-800 text-white min-h-screen">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          {children}
-        </div>
+      <head>
+        <style>
+          {`
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
+            
+            html, body {
+              background-color: #0a0a0f;
+              color: #e2e2e8;
+              font-family: system-ui, -apple-system, sans-serif;
+            }
+          `}
+        </style>
+      </head>
+      <body style={{ backgroundColor: '#0a0a0f', color: '#e2e2e8' }}>
+        {children}
       </body>
     </html>
   );

@@ -5,10 +5,10 @@ import { requireAuth, tagsMatch } from '@/lib/auth';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = (await Promise.resolve(params)).id;
+    const { id } = await params;
 
     // Check auth
     const auth = await requireAuth(req);
@@ -87,10 +87,10 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = (await Promise.resolve(params)).id;
+    const { id } = await params;
 
     // Check auth - dashboard session only
     const hasSession = req.cookies.get('sb-auth-token');
@@ -179,10 +179,10 @@ export async function PUT(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = (await Promise.resolve(params)).id;
+    const { id } = await params;
 
     // Check auth - dashboard session only
     const hasSession = req.cookies.get('sb-auth-token');
