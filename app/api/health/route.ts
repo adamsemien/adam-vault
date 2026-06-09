@@ -1,5 +1,10 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { CORS_HEADERS, corsOptions } from '@/lib/cors';
+
+export async function OPTIONS() {
+  return corsOptions();
+}
 
 export async function GET() {
   try {
@@ -30,12 +35,12 @@ export async function GET() {
       key_count,
       needs_rotation: needsRotation,
       last_rotated: lastRotated,
-    });
+    }, { headers: CORS_HEADERS });
   } catch (error) {
     console.error('GET /api/health:', error);
     return NextResponse.json(
       { status: 'error', message: 'Failed to fetch health status' },
-      { status: 500 }
+      { status: 500, headers: CORS_HEADERS }
     );
   }
 }

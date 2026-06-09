@@ -2,13 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
+import { CORS_HEADERS, corsOptions } from '@/lib/cors';
+
+export async function OPTIONS() {
+  return corsOptions();
+}
 
 export async function POST(req: NextRequest) {
   try {
     // Check auth - dashboard session only
     const hasSession = req.cookies.get('sb-auth-token');
     if (!hasSession) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: CORS_HEADERS });
     }
 
     const { name, allowed_tags } = await req.json();
@@ -16,7 +21,7 @@ export async function POST(req: NextRequest) {
     if (!name) {
       return NextResponse.json(
         { error: 'name is required' },
-        { status: 400 }
+        { status: 400, headers: CORS_HEADERS }
       );
     }
 
@@ -52,13 +57,13 @@ export async function POST(req: NextRequest) {
         allowed_tags: tokenRecord.allowed_tags,
         token: token, // Only returned once at creation
       },
-      { status: 201 }
+      { status: 201, headers: CORS_HEADERS }
     );
   } catch (error) {
     console.error('POST /api/tokens:', error);
     return NextResponse.json(
       { error: 'Failed to create token' },
-      { status: 500 }
+      { status: 500, headers: CORS_HEADERS }
     );
   }
 }
@@ -68,7 +73,7 @@ export async function GET(req: NextRequest) {
     // Check auth - dashboard session only
     const hasSession = req.cookies.get('sb-auth-token');
     if (!hasSession) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: CORS_HEADERS });
     }
 
     const { data, error } = await supabase
@@ -78,12 +83,12 @@ export async function GET(req: NextRequest) {
 
     if (error) throw error;
 
-    return NextResponse.json({ tokens: data || [] });
+    return NextResponse.json({ tokens: data || [] }, { headers: CORS_HEADERS });
   } catch (error) {
     console.error('GET /api/tokens:', error);
     return NextResponse.json(
       { error: 'Failed to fetch tokens' },
-      { status: 500 }
+      { status: 500, headers: CORS_HEADERS }
     );
   }
 }

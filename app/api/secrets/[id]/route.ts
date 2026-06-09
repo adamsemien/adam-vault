@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { encrypt, decrypt } from '@/lib/crypto';
 import { requireAuth, tagsMatch } from '@/lib/auth';
+import { CORS_HEADERS, corsOptions } from '@/lib/cors';
+
+export async function OPTIONS() {
+  return corsOptions();
+}
 
 export async function GET(
   req: NextRequest,
@@ -13,14 +18,14 @@ export async function GET(
     // Check auth
     const auth = await requireAuth(req);
     if (!auth.isSession && !auth.isToken) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: CORS_HEADERS });
     }
 
     const encryptionKey = process.env.VAULT_ENCRYPTION_KEY;
     if (!encryptionKey) {
       return NextResponse.json(
         { error: 'Encryption key not configured' },
-        { status: 500 }
+        { status: 500, headers: CORS_HEADERS }
       );
     }
 
@@ -32,7 +37,7 @@ export async function GET(
       .single();
 
     if (error || !data) {
-      return NextResponse.json({ error: 'Secret not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Secret not found' }, { status: 404, headers: CORS_HEADERS });
     }
 
     // If token-based, check tag match
@@ -51,7 +56,7 @@ export async function GET(
         if (!tokenData || !tagsMatch(tokenData.allowed_tags || [], data.project_tags || [])) {
           return NextResponse.json(
             { error: 'Forbidden: tag mismatch' },
-            { status: 403 }
+            { status: 403, headers: CORS_HEADERS }
           );
         }
       }
@@ -75,12 +80,12 @@ export async function GET(
       description: data.description,
       project_tags: data.project_tags,
       last_rotated: data.last_rotated,
-    });
+    }, { headers: CORS_HEADERS });
   } catch (error) {
     console.error('GET /api/secrets/[id]:', error);
     return NextResponse.json(
       { error: 'Failed to fetch secret' },
-      { status: 500 }
+      { status: 500, headers: CORS_HEADERS }
     );
   }
 }
@@ -95,14 +100,14 @@ export async function PUT(
     // Check auth - dashboard session only
     const hasSession = req.cookies.get('sb-auth-token');
     if (!hasSession) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: CORS_HEADERS });
     }
 
     const encryptionKey = process.env.VAULT_ENCRYPTION_KEY;
     if (!encryptionKey) {
       return NextResponse.json(
         { error: 'Encryption key not configured' },
-        { status: 500 }
+        { status: 500, headers: CORS_HEADERS }
       );
     }
 
@@ -117,7 +122,7 @@ export async function PUT(
       .single();
 
     if (getError || !current) {
-      return NextResponse.json({ error: 'Secret not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Secret not found' }, { status: 404, headers: CORS_HEADERS });
     }
 
     // Build update object
@@ -167,12 +172,12 @@ export async function PUT(
       needs_rotation: updated.needs_rotation,
       last_rotated: updated.last_rotated,
       updated_at: updated.updated_at,
-    });
+    }, { headers: CORS_HEADERS });
   } catch (error) {
     console.error('PUT /api/secrets/[id]:', error);
     return NextResponse.json(
       { error: 'Failed to update secret' },
-      { status: 500 }
+      { status: 500, headers: CORS_HEADERS }
     );
   }
 }
@@ -187,7 +192,7 @@ export async function DELETE(
     // Check auth - dashboard session only
     const hasSession = req.cookies.get('sb-auth-token');
     if (!hasSession) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: CORS_HEADERS });
     }
 
     // Write audit log BEFORE deleting (soft record)
@@ -205,12 +210,12 @@ export async function DELETE(
 
     if (error) throw error;
 
-    return NextResponse.json({ deleted: true });
+    return NextResponse.json({ deleted: true }, { headers: CORS_HEADERS });
   } catch (error) {
     console.error('DELETE /api/secrets/[id]:', error);
     return NextResponse.json(
       { error: 'Failed to delete secret' },
-      { status: 500 }
+      { status: 500, headers: CORS_HEADERS }
     );
   }
 }

@@ -2,20 +2,25 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { encrypt, decrypt } from '@/lib/crypto';
 import { requireAuth, tagsMatch } from '@/lib/auth';
+import { CORS_HEADERS, corsOptions } from '@/lib/cors';
+
+export async function OPTIONS() {
+  return corsOptions();
+}
 
 export async function GET(req: NextRequest) {
   try {
     // Check auth
     const auth = await requireAuth(req);
     if (!auth.isSession && !auth.isToken) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: CORS_HEADERS });
     }
 
     const encryptionKey = process.env.VAULT_ENCRYPTION_KEY;
     if (!encryptionKey) {
       return NextResponse.json(
         { error: 'Encryption key not configured' },
-        { status: 500 }
+        { status: 500, headers: CORS_HEADERS }
       );
     }
 
@@ -47,16 +52,16 @@ export async function GET(req: NextRequest) {
           return tagsMatch(allowedTags, secret.project_tags || []);
         });
 
-        return NextResponse.json({ secrets: filtered || [] });
+        return NextResponse.json({ secrets: filtered || [] }, { headers: CORS_HEADERS });
       }
     }
 
-    return NextResponse.json({ secrets: data || [] });
+    return NextResponse.json({ secrets: data || [] }, { headers: CORS_HEADERS });
   } catch (error) {
     console.error('GET /api/secrets:', error);
     return NextResponse.json(
       { error: 'Failed to fetch secrets' },
-      { status: 500 }
+      { status: 500, headers: CORS_HEADERS }
     );
   }
 }
@@ -66,14 +71,14 @@ export async function POST(req: NextRequest) {
     // Check auth - dashboard session only
     const hasSession = req.cookies.get('sb-auth-token');
     if (!hasSession) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: CORS_HEADERS });
     }
 
     const encryptionKey = process.env.VAULT_ENCRYPTION_KEY;
     if (!encryptionKey) {
       return NextResponse.json(
         { error: 'Encryption key not configured' },
-        { status: 500 }
+        { status: 500, headers: CORS_HEADERS }
       );
     }
 
@@ -83,14 +88,14 @@ export async function POST(req: NextRequest) {
     if (!name || !service || !value) {
       return NextResponse.json(
         { error: 'Missing required fields: name, service, value' },
-        { status: 400 }
+        { status: 400, headers: CORS_HEADERS }
       );
     }
 
     if (!/^[A-Z_]+$/.test(name)) {
       return NextResponse.json(
         { error: 'Name must be uppercase with underscores only' },
-        { status: 400 }
+        { status: 400, headers: CORS_HEADERS }
       );
     }
 
@@ -134,13 +139,13 @@ export async function POST(req: NextRequest) {
         project_tags: secret.project_tags,
         created_at: secret.created_at,
       },
-      { status: 201 }
+      { status: 201, headers: CORS_HEADERS }
     );
   } catch (error) {
     console.error('POST /api/secrets:', error);
     return NextResponse.json(
       { error: 'Failed to create secret' },
-      { status: 500 }
+      { status: 500, headers: CORS_HEADERS }
     );
   }
 }

@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { CORS_HEADERS, corsOptions } from '@/lib/cors';
+
+export async function OPTIONS() {
+  return corsOptions();
+}
 
 export async function DELETE(
   req: NextRequest,
@@ -11,7 +16,7 @@ export async function DELETE(
     // Check auth - dashboard session only
     const hasSession = req.cookies.get('sb-auth-token');
     if (!hasSession) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: CORS_HEADERS });
     }
 
     // Soft delete - set revoked=true
@@ -22,12 +27,12 @@ export async function DELETE(
 
     if (error) throw error;
 
-    return NextResponse.json({ revoked: true });
+    return NextResponse.json({ revoked: true }, { headers: CORS_HEADERS });
   } catch (error) {
     console.error('DELETE /api/tokens/[id]:', error);
     return NextResponse.json(
       { error: 'Failed to revoke token' },
-      { status: 500 }
+      { status: 500, headers: CORS_HEADERS }
     );
   }
 }

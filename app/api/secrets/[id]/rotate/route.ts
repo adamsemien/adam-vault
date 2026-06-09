@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { encrypt } from '@/lib/crypto';
+import { CORS_HEADERS, corsOptions } from '@/lib/cors';
+
+export async function OPTIONS() {
+  return corsOptions();
+}
 
 export async function POST(
   req: NextRequest,
@@ -12,14 +17,14 @@ export async function POST(
     // Check auth - dashboard session only
     const hasSession = req.cookies.get('sb-auth-token');
     if (!hasSession) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: CORS_HEADERS });
     }
 
     const encryptionKey = process.env.VAULT_ENCRYPTION_KEY;
     if (!encryptionKey) {
       return NextResponse.json(
         { error: 'Encryption key not configured' },
-        { status: 500 }
+        { status: 500, headers: CORS_HEADERS }
       );
     }
 
@@ -28,7 +33,7 @@ export async function POST(
     if (!new_value) {
       return NextResponse.json(
         { error: 'new_value is required' },
-        { status: 400 }
+        { status: 400, headers: CORS_HEADERS }
       );
     }
 
@@ -40,7 +45,7 @@ export async function POST(
       .single();
 
     if (getError || !current) {
-      return NextResponse.json({ error: 'Secret not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Secret not found' }, { status: 404, headers: CORS_HEADERS });
     }
 
     // Encrypt new value
@@ -77,13 +82,13 @@ export async function POST(
         name: rotated.name,
         last_rotated: rotated.last_rotated,
       },
-      { status: 200 }
+      { status: 200, headers: CORS_HEADERS }
     );
   } catch (error) {
     console.error('POST /api/secrets/[id]/rotate:', error);
     return NextResponse.json(
       { error: 'Failed to rotate secret' },
-      { status: 500 }
+      { status: 500, headers: CORS_HEADERS }
     );
   }
 }
