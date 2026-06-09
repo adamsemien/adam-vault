@@ -8,6 +8,13 @@ export async function DELETE(
   try {
     const id = (await Promise.resolve(params)).id;
 
+    // Check auth - dashboard session only
+    const hasSession = req.cookies.get('sb-auth-token');
+    if (!hasSession) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Soft delete - set revoked=true
     const { error } = await supabase
       .from('project_tokens')
       .update({ revoked: true })
@@ -15,7 +22,7 @@ export async function DELETE(
 
     if (error) throw error;
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ revoked: true });
   } catch (error) {
     console.error('DELETE /api/tokens/[id]:', error);
     return NextResponse.json(

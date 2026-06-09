@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import crypto from 'crypto';
+import bcrypt from 'bcrypt';
 
 export async function POST(req: NextRequest) {
   try {
+    // Check auth - dashboard session only
+    const hasSession = req.cookies.get('sb-auth-token');
+    if (!hasSession) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { name, allowed_tags } = await req.json();
 
     if (!name) {
@@ -13,10 +20,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const token = crypto.randomBytes(32).toString('hex');
-    const token_hash = crypto.createHash('sha256').update(token).digest('hex');
-    const token_prefix = token.slice(0, 8);
+    // Generate token: 36 random bytes in hex = avt_ prefix (4 chars) + 36 hex chars = 40 total
+    const randomBytes = crypto.randomBytes(18).toString('hex');
+    const token = `avt_${randomBytes}`;
+    
+    // Hash with bcrypt
+    const token_hash = await bcrypt.hash(token, 10);
+    const token_prefix = token.slice(0, 12); // "avt_" + first 8 chars
 
+    // Insert token
     const { data, error } = await supabase
       .from('project_tokens')
       .insert({
@@ -30,10 +42,18 @@ export async function POST(req: NextRequest) {
 
     if (error) throw error;
 
-    return NextResponse.json({
-      token,
-      tokenData: data?.[0],
-    }, { status: 201 });
+    const tokenRecord = data?.[0];
+
+    return NextResponse.json(
+      {
+        id: tokenRecord.id,
+        name: tokenRecord.name,
+        token_prefix: tokenRecord.token_prefix,
+        allowed_tags: tokenRecord.allowed_tags,
+        full_token: token, // Only returned once at creation
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error('POST /api/tokens:', error);
     return NextResponse.json(
@@ -43,11 +63,17 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    // Check auth - dashboard session only
+    const hasSession = req.cookies.get('sb-auth-token');
+    if (!hasSession) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { data, error } = await supabase
       .from('project_tokens')
-      .select('id, name, token_prefix, allowed_tags, last_used, created_at, revoked')
+      .select('id, name, token_prefix, allowed_tags, last_used, revoked, created_at')
       .order('created_at', { ascending: false });
 
     if (error) throw error;

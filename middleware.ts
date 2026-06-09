@@ -3,18 +3,21 @@ import { NextRequest, NextResponse } from 'next/server';
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Allow public routes
+  // Allow public routes and health check
   if (pathname === '/login' || pathname === '/api/health') {
     return NextResponse.next();
   }
 
-  // Check for auth token in headers
-  const token = request.headers.get('authorization')?.replace('Bearer ', '');
-  
-  // For protected pages
-  if (pathname === '/vault' || pathname === '/') {
-    const isLoggedIn = request.cookies.get('auth_token')?.value;
-    if (!isLoggedIn) {
+  // Allow API calls with Bearer token
+  if (pathname.startsWith('/api/') && request.headers.get('authorization')?.startsWith('Bearer ')) {
+    return NextResponse.next();
+  }
+
+  // Check for Supabase session cookie for protected pages
+  if (pathname.startsWith('/vault') || pathname === '/') {
+    const hasSession = request.cookies.get('sb-auth-token');
+
+    if (!hasSession) {
       return NextResponse.redirect(new URL('/login', request.url));
     }
   }

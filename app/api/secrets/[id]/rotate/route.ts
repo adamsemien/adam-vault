@@ -6,16 +6,23 @@ export async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const encryptionKey = process.env.VAULT_ENCRYPTION_KEY;
-  if (!encryptionKey) {
-    return NextResponse.json(
-      { error: 'Encryption key not configured' },
-      { status: 500 }
-    );
-  }
-
   try {
     const id = (await Promise.resolve(params)).id;
+
+    // Check auth - dashboard session only
+    const hasSession = req.cookies.get('sb-auth-token');
+    if (!hasSession) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const encryptionKey = process.env.VAULT_ENCRYPTION_KEY;
+    if (!encryptionKey) {
+      return NextResponse.json(
+        { error: 'Encryption key not configured' },
+        { status: 500 }
+      );
+    }
+
     const { new_value } = await req.json();
 
     if (!new_value) {
@@ -28,15 +35,12 @@ export async function POST(
     // Get current secret
     const { data: current, error: getError } = await supabase
       .from('secrets')
-      .select('encrypted_value, iv')
+      .select('*')
       .eq('id', id)
       .single();
 
     if (getError || !current) {
-      return NextResponse.json(
-        { error: 'Secret not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Secret not found' }, { status: 404 });
     }
 
     // Encrypt new value
@@ -58,7 +62,23 @@ export async function POST(
 
     if (error) throw error;
 
-    return NextResponse.json({ secret: data?.[0] });
+    const rotated = data?.[0];
+
+    // Write audit log
+    await supabase.from('audit_log').insert({
+      secret_id: id,
+      action: 'rotated',
+      token_name: null,
+    });
+
+    return NextResponse.json(
+      {
+        id: rotated.id,
+        name: rotated.name,
+        last_rotated: rotated.last_rotated,
+      },
+      { status: 200 }
+    );
   } catch (error) {
     console.error('POST /api/secrets/[id]/rotate:', error);
     return NextResponse.json(
