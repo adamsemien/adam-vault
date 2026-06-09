@@ -1,13 +1,16 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Mail } from 'lucide-react';
 
 export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [magicLoading, setMagicLoading] = useState(false);
   const [error, setError] = useState('');
+  const [magicError, setMagicError] = useState('');
+  const [magicSent, setMagicSent] = useState(false);
 
   const EMAIL = 'adamsemien@gmail.com';
 
@@ -37,6 +40,31 @@ export default function LoginPage() {
     }
   }
 
+  async function handleMagicLink() {
+    setMagicLoading(true);
+    setMagicError('');
+    setMagicSent(false);
+
+    try {
+      const res = await fetch('/api/auth/magic-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: EMAIL }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to send magic link');
+      }
+
+      setMagicSent(true);
+    } catch (err) {
+      setMagicError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setMagicLoading(false);
+    }
+  }
+
   return (
     <div
       style={{ backgroundColor: '#08090a' }}
@@ -60,10 +88,11 @@ export default function LoginPage() {
           </div>
           <h1 className="text-xl font-semibold text-white tracking-tight">Adam Vault</h1>
           <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>
-            Enter your password to continue
+            Sign in to continue
           </p>
         </div>
 
+        {/* Password error */}
         {error && (
           <div
             className="mb-5 px-4 py-3 rounded-lg text-sm"
@@ -143,7 +172,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Submit */}
+          {/* Sign In button */}
           <button
             type="submit"
             disabled={loading}
@@ -156,6 +185,72 @@ export default function LoginPage() {
             {loading ? 'Signing in…' : 'Sign In'}
           </button>
         </form>
+
+        {/* Divider */}
+        <div className="flex items-center my-5">
+          <div className="flex-1" style={{ height: '1px', backgroundColor: 'rgba(255,255,255,0.08)' }} />
+          <span className="mx-3 text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>or</span>
+          <div className="flex-1" style={{ height: '1px', backgroundColor: 'rgba(255,255,255,0.08)' }} />
+        </div>
+
+        {/* Magic link section */}
+        {magicSent ? (
+          <div
+            className="flex items-start gap-3 px-4 py-3 rounded-lg text-sm"
+            style={{
+              backgroundColor: 'rgba(94,106,210,0.08)',
+              border: '1px solid rgba(94,106,210,0.25)',
+              color: 'rgba(255,255,255,0.7)',
+            }}
+          >
+            <Mail size={16} className="mt-0.5 shrink-0" style={{ color: '#5e6ad2' }} />
+            <div>
+              <p className="font-medium text-white">Check your email</p>
+              <p className="mt-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                A magic link was sent to {EMAIL}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <>
+            {magicError && (
+              <div
+                className="mb-3 px-4 py-3 rounded-lg text-sm"
+                style={{
+                  backgroundColor: 'rgba(239,68,68,0.08)',
+                  border: '1px solid rgba(239,68,68,0.2)',
+                  color: '#fca5a5',
+                }}
+              >
+                {magicError}
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={handleMagicLink}
+              disabled={magicLoading}
+              className="w-full py-2.5 rounded-lg text-sm font-medium transition-colors"
+              style={{
+                backgroundColor: 'transparent',
+                border: '1px solid rgba(255,255,255,0.1)',
+                color: magicLoading ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.6)',
+                cursor: magicLoading ? 'not-allowed' : 'pointer',
+              }}
+              onMouseEnter={(e) => {
+                if (!magicLoading) {
+                  e.currentTarget.style.borderColor = 'rgba(94,106,210,0.5)';
+                  e.currentTarget.style.color = 'rgba(255,255,255,0.85)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)';
+                e.currentTarget.style.color = magicLoading ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.6)';
+              }}
+            >
+              {magicLoading ? 'Sending…' : 'Send Magic Link'}
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
