@@ -1,5 +1,8 @@
 'use client';
 
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { RefreshCw } from 'lucide-react';
 import { AuditLog } from '@/types';
 import { formatDistanceToNow } from '@/lib/dateUtils';
 
@@ -9,95 +12,137 @@ export interface AuditLogProps {
   isLoading?: boolean;
 }
 
-const actionColors: Record<string, { bg: string; text: string }> = {
-  created: { bg: 'bg-blue-500/20', text: 'text-blue-200' },
-  updated: { bg: 'bg-orange-500/20', text: 'text-orange-200' },
-  rotated: { bg: 'bg-purple-500/20', text: 'text-purple-200' },
-  viewed: { bg: 'bg-gray-500/20', text: 'text-gray-200' },
-  deleted: { bg: 'bg-red-500/20', text: 'text-red-200' },
+const ACTION_STYLES: Record<string, { bg: string; color: string }> = {
+  created: { bg: 'rgba(59,130,246,0.1)', color: '#60a5fa' },
+  viewed: { bg: 'rgba(107,114,128,0.1)', color: '#9ca3af' },
+  rotated: { bg: 'rgba(124,106,247,0.1)', color: '#a89ef5' },
+  updated: { bg: 'rgba(245,158,11,0.1)', color: '#f59e0b' },
+  deleted: { bg: 'rgba(239,68,68,0.1)', color: '#ef4444' },
 };
 
-export function AuditLogComponent({
-  logs,
-  onRefresh,
-  isLoading = false,
-}: AuditLogProps) {
+export function AuditLogComponent({ logs, onRefresh, isLoading = false }: AuditLogProps) {
   return (
-    <div className="space-y-4">
-      {/* Toolbar */}
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm text-[#6b6b80]">Last 50 entries</h3>
+    <div>
+      {/* Header bar */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <span style={{ fontSize: 12, color: '#555558', fontFamily: "'Inter', sans-serif" }}>
+          Last 50 entries
+        </span>
         <button
           onClick={onRefresh}
           disabled={isLoading}
-          className="px-3 py-1 bg-[#1a1a28] hover:bg-[#252540] text-[#e2e2e8] text-sm rounded font-medium disabled:opacity-50"
+          style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            height: 28, paddingLeft: 10, paddingRight: 10,
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 6,
+            color: '#8b8b8e',
+            fontSize: 12,
+            cursor: isLoading ? 'not-allowed' : 'pointer',
+            opacity: isLoading ? 0.6 : 1,
+            fontFamily: "'Inter', sans-serif",
+          }}
         >
-          {isLoading ? 'Refreshing...' : 'Refresh'}
+          <motion.span
+            animate={isLoading ? { rotate: 360 } : { rotate: 0 }}
+            transition={isLoading ? { duration: 1, repeat: Infinity, ease: 'linear' } : {}}
+            style={{ display: 'flex' }}
+          >
+            <RefreshCw size={12} />
+          </motion.span>
+          {isLoading ? 'Refreshing…' : 'Refresh'}
         </button>
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto border border-[#1a1a28] rounded">
-        <table className="w-full text-sm">
+      <div style={{ width: '100%', overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
-            <tr className="border-b border-[#1a1a28] bg-[#0a0a0f]">
-              <th className="px-4 py-3 text-left text-[#6b6b80] font-medium">Timestamp</th>
-              <th className="px-4 py-3 text-left text-[#6b6b80] font-medium">Action</th>
-              <th className="px-4 py-3 text-left text-[#6b6b80] font-medium">Key Name</th>
-              <th className="px-4 py-3 text-left text-[#6b6b80] font-medium">Source</th>
-              <th className="px-4 py-3 text-left text-[#6b6b80] font-medium">Note</th>
+            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              {['TIMESTAMP', 'ACTION', 'KEY', 'SOURCE', 'NOTE'].map((h) => (
+                <th
+                  key={h}
+                  style={{
+                    padding: '0 20px 10px',
+                    textAlign: 'left',
+                    fontSize: 11,
+                    fontWeight: 500,
+                    letterSpacing: '0.05em',
+                    color: '#555558',
+                    fontFamily: "'Inter', sans-serif",
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {h}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
             {logs.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-[#6b6b80]">
+                <td colSpan={5} style={{ padding: '48px 20px', textAlign: 'center', color: '#555558', fontSize: 13, fontFamily: "'Inter', sans-serif" }}>
                   No audit logs yet
                 </td>
               </tr>
             ) : (
-              logs.map((log) => {
-                const colors = actionColors[log.action] || {
-                  bg: 'bg-gray-500/20',
-                  text: 'text-gray-200',
-                };
+              logs.map((log, i) => {
+                const style = ACTION_STYLES[log.action] || ACTION_STYLES.viewed;
                 return (
-                  <tr
+                  <motion.tr
                     key={log.id}
-                    className="border-b border-[#1a1a28] hover:bg-[#0e0e18]/50 transition-colors"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: i * 0.02 }}
+                    style={{
+                      borderBottom: 'none',
+                      paddingBottom: 2,
+                    }}
                   >
-                    {/* Timestamp */}
-                    <td className="px-4 py-3 text-[#6b6b80] text-xs">
+                    {/* TIMESTAMP */}
+                    <td style={{ padding: '8px 20px', fontSize: 11, color: '#555558', fontFamily: "'JetBrains Mono', monospace", whiteSpace: 'nowrap' }}>
                       {formatDistanceToNow(new Date(log.timestamp))}
                     </td>
 
-                    {/* Action */}
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-block px-2 py-1 rounded text-xs font-medium ${colors.bg} ${colors.text}`}
-                      >
+                    {/* ACTION */}
+                    <td style={{ padding: '8px 20px' }}>
+                      <span style={{
+                        padding: '2px 8px',
+                        borderRadius: 999,
+                        fontSize: 11,
+                        fontWeight: 500,
+                        background: style.bg,
+                        color: style.color,
+                        fontFamily: "'Inter', sans-serif",
+                        letterSpacing: '0.01em',
+                      }}>
                         {log.action}
                       </span>
                     </td>
 
-                    {/* Key Name */}
-                    <td className="px-4 py-3">
-                      <span
-                        className="text-[#e2e2e8] font-mono uppercase text-xs"
-                        style={{ fontFamily: 'monospace' }}
-                      >
+                    {/* KEY */}
+                    <td style={{ padding: '8px 20px' }}>
+                      <span style={{
+                        fontFamily: "'JetBrains Mono', monospace",
+                        fontSize: 11,
+                        color: '#8b8b8e',
+                        letterSpacing: '0.02em',
+                      }}>
                         {log.secret_id}
                       </span>
                     </td>
 
-                    {/* Source */}
-                    <td className="px-4 py-3 text-[#e2e2e8] text-xs">
+                    {/* SOURCE */}
+                    <td style={{ padding: '8px 20px', fontSize: 12, color: '#8b8b8e', fontFamily: "'Inter', sans-serif" }}>
                       {log.token_name || 'Dashboard'}
                     </td>
 
-                    {/* Note */}
-                    <td className="px-4 py-3 text-[#6b6b80] text-xs">{log.note || '—'}</td>
-                  </tr>
+                    {/* NOTE */}
+                    <td style={{ padding: '8px 20px', fontSize: 12, color: '#555558', fontFamily: "'Inter', sans-serif" }}>
+                      {log.note || '—'}
+                    </td>
+                  </motion.tr>
                 );
               })
             )}

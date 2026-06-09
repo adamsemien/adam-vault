@@ -1,26 +1,79 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg-base: #080809;
+  --bg-surface: #0f0f12;
+  --bg-elevated: #161618;
+  --bg-overlay: #1c1c1f;
+  --border: #ffffff0f;
+  --border-strong: #ffffff1a;
+  --text-primary: #ededef;
+  --text-secondary: #8b8b8e;
+  --text-muted: #555558;
+  --accent: #7c6af7;
+  --accent-hover: #8f7ff9;
+  --accent-dim: rgba(124, 106, 247, 0.08);
+  --green: #22c55e;
+  --amber: #f59e0b;
+  --red: #ef4444;
+  --red-dim: rgba(239, 68, 68, 0.08);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: #080809;
+  color: #ededef;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom dark scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.14) rgba(255, 255, 255, 0.04);
+}
+
+/* Selection */
+::selection {
+  background: rgba(124, 106, 247, 0.3);
+  color: #ededef;
+}
+
+/* Focus ring */
+:focus-visible {
+  outline: 1.5px solid rgba(124, 106, 247, 0.6);
+  outline-offset: 2px;
+}
+
+/* Remove default focus for mouse clicks */
+:focus:not(:focus-visible) {
+  outline: none;
 }
