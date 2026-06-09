@@ -20,9 +20,9 @@ export async function GET(req: NextRequest) {
 
     // Verify email is allowed
     const email = data.session.user?.email;
-    const allowedEmail = 'adamsemien@gmail.com';
-    
-    if (email !== allowedEmail) {
+    const allowedEmails = ['adamsemien@gmail.com', 'rraadamm@gmail.com'];
+
+    if (!email || !allowedEmails.includes(email)) {
       // Revoke the session
       await supabase.auth.signOut();
       return NextResponse.redirect(new URL(`/login?error=email_not_allowed`, req.url));

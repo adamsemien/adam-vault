@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
-const ALLOWED_EMAIL = 'adamsemien@gmail.com';
+const ALLOWED_EMAILS = ['adamsemien@gmail.com', 'rraadamm@gmail.com'];
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,9 +15,9 @@ export async function POST(req: NextRequest) {
     }
 
     // Validate email is allowed
-    if (email !== ALLOWED_EMAIL) {
+    if (!ALLOWED_EMAILS.includes(email)) {
       return NextResponse.json(
-        { error: `Only ${ALLOWED_EMAIL} is allowed` },
+        { error: 'Email not authorized' },
         { status: 403 }
       );
     }

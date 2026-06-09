@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 
-const ALLOWED_EMAIL = 'adamsemien@gmail.com';
+const ALLOWED_EMAILS = ['adamsemien@gmail.com', 'rraadamm@gmail.com'];
 
 interface AuthContext {
   isSession: boolean;

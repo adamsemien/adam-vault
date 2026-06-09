@@ -4,6 +4,7 @@ import { useState, FormEvent } from 'react';
 import { Eye, EyeOff, Mail } from 'lucide-react';
 
 export default function LoginPage() {
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -11,8 +12,6 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [magicError, setMagicError] = useState('');
   const [magicSent, setMagicSent] = useState(false);
-
-  const EMAIL = 'adamsemien@gmail.com';
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -23,7 +22,7 @@ export default function LoginPage() {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: EMAIL, password }),
+        body: JSON.stringify({ email, password }),
       });
 
       if (!res.ok) {
@@ -49,7 +48,7 @@ export default function LoginPage() {
       const res = await fetch('/api/auth/magic-link', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: EMAIL }),
+        body: JSON.stringify({ email }),
       });
 
       if (!res.ok) {
@@ -117,15 +116,20 @@ export default function LoginPage() {
             </label>
             <input
               type="email"
-              value={EMAIL}
-              readOnly
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full px-3 py-2.5 rounded-lg text-sm outline-none"
               style={{
                 backgroundColor: 'rgba(255,255,255,0.02)',
                 border: '1px solid rgba(255,255,255,0.08)',
-                color: 'rgba(255,255,255,0.5)',
-                cursor: 'default',
+                color: 'rgba(255,255,255,0.9)',
               }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = '#5e6ad2'; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
+              placeholder="you@example.com"
+              required
+              autoComplete="email"
+              disabled={loading}
             />
           </div>
 
@@ -207,7 +211,7 @@ export default function LoginPage() {
             <div>
               <p className="font-medium text-white">Check your email</p>
               <p className="mt-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>
-                A magic link was sent to {EMAIL}
+                A magic link was sent to {email}
               </p>
             </div>
           </div>
