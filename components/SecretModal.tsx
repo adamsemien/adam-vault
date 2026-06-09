@@ -5,6 +5,18 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Plus } from 'lucide-react';
 import { Secret } from '@/types';
 
+// ─── Design tokens ────────────────────────────────────────────────────────────
+const C = {
+  panelBg: '#0f1011',
+  surface: '#191a1b',
+  textPrimary: '#f7f8f8',
+  textMuted: '#8a8f98',
+  textSubtle: '#62666d',
+  brandIndigo: '#5e6ad2',
+  borderDefault: 'rgba(255,255,255,0.08)',
+  borderSubtle: 'rgba(255,255,255,0.05)',
+};
+
 export interface SecretModalProps {
   open: boolean;
   editingSecret?: Secret;
@@ -22,27 +34,34 @@ export interface SecretFormData {
   project_tags: string[];
 }
 
-const inputStyle: React.CSSProperties = {
+const inputBase: React.CSSProperties = {
   width: '100%',
   padding: '8px 12px',
-  background: 'rgba(255,255,255,0.04)',
+  background: 'rgba(255,255,255,0.02)',
   border: '1px solid rgba(255,255,255,0.08)',
   borderRadius: 6,
-  color: '#ededef',
+  color: '#f7f8f8',
   fontSize: 13,
   fontFamily: "'Inter', sans-serif",
+  fontFeatureSettings: '"cv01","ss03"',
   outline: 'none',
-  transition: 'border-color 0.15s',
+  transition: 'border-color 150ms ease, box-shadow 150ms ease',
+};
+
+const monoInputBase: React.CSSProperties = {
+  ...inputBase,
+  fontFamily: "'JetBrains Mono', monospace",
 };
 
 const labelStyle: React.CSSProperties = {
   display: 'block',
   fontSize: 11,
-  fontWeight: 500,
-  color: '#555558',
-  letterSpacing: '0.04em',
+  fontWeight: 600,
+  color: '#62666d',
+  letterSpacing: '0.05em',
   marginBottom: 6,
   fontFamily: "'Inter', sans-serif",
+  fontFeatureSettings: '"cv01","ss03"',
   textTransform: 'uppercase' as const,
 };
 
@@ -55,11 +74,7 @@ export function SecretModal({
   isLoading = false,
 }: SecretModalProps) {
   const [formData, setFormData] = useState<SecretFormData>({
-    name: '',
-    service: '',
-    value: '',
-    description: '',
-    project_tags: [],
+    name: '', service: '', value: '', description: '', project_tags: [],
   });
   const [tagInput, setTagInput] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -108,10 +123,9 @@ export function SecretModal({
     setFormData((p) => ({ ...p, name: upper }));
   };
 
-  const getFocusBorder = (field: string): React.CSSProperties => ({
-    ...inputStyle,
-    borderColor: focusedField === field ? 'rgba(124,106,247,0.6)' : 'rgba(255,255,255,0.08)',
-    boxShadow: focusedField === field ? '0 0 0 3px rgba(124,106,247,0.08)' : 'none',
+  const focused = (field: string): React.CSSProperties => ({
+    borderColor: focusedField === field ? 'rgba(113,112,255,0.5)' : 'rgba(255,255,255,0.08)',
+    boxShadow: focusedField === field ? '0 0 0 2px rgba(113,112,255,0.12)' : 'none',
   });
 
   return (
@@ -124,28 +138,28 @@ export function SecretModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.15 }}
             onClick={onClose}
             style={{
               position: 'fixed', inset: 0,
-              background: 'rgba(0,0,0,0.6)',
+              background: 'rgba(0,0,0,0.65)',
               backdropFilter: 'blur(4px)',
               zIndex: 40,
             }}
           />
 
-          {/* Panel */}
+          {/* Slide-in panel */}
           <motion.div
             key="panel"
-            initial={{ x: '100%' }}
+            initial={{ x: 400 }}
             animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'spring', stiffness: 340, damping: 32 }}
+            exit={{ x: 400 }}
+            transition={{ type: 'spring', stiffness: 350, damping: 34 }}
             style={{
               position: 'fixed', right: 0, top: 0,
               height: '100vh', width: 400,
-              background: '#0f0f12',
-              borderLeft: '1px solid rgba(255,255,255,0.06)',
+              background: C.panelBg,
+              borderLeft: `1px solid ${C.borderDefault}`,
               zIndex: 50,
               display: 'flex', flexDirection: 'column',
               boxShadow: '-24px 0 80px rgba(0,0,0,0.5)',
@@ -154,22 +168,19 @@ export function SecretModal({
             {/* Header */}
             <div style={{
               padding: '20px 24px',
-              borderBottom: '1px solid rgba(255,255,255,0.06)',
+              borderBottom: `1px solid ${C.borderSubtle}`,
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               flexShrink: 0,
             }}>
               <div>
-                <p style={{ fontSize: 10, color: '#555558', letterSpacing: '0.08em', fontFamily: "'Inter', sans-serif", marginBottom: 3, textTransform: 'uppercase' }}>
-                  {editingSecret ? 'Edit Secret' : 'Add Secret'}
-                </p>
                 <h2 style={{
-                  fontFamily: "'JetBrains Mono', monospace",
-                  fontSize: 15,
-                  fontWeight: 600,
-                  color: '#ededef',
-                  letterSpacing: '-0.01em',
+                  fontSize: 15, fontWeight: 600,
+                  color: C.textPrimary,
+                  fontFamily: "'Inter', sans-serif",
+                  fontFeatureSettings: '"cv01","ss03"',
+                  letterSpacing: '-0.3px',
                 }}>
-                  {editingSecret ? editingSecret.name : 'New Key'}
+                  {editingSecret ? `Edit ${editingSecret.name}` : 'Add Key'}
                 </h2>
               </div>
               <button
@@ -177,11 +188,12 @@ export function SecretModal({
                 style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   width: 28, height: 28,
-                  background: 'rgba(255,255,255,0.05)',
-                  border: '1px solid rgba(255,255,255,0.08)',
+                  background: 'rgba(255,255,255,0.04)',
+                  border: `1px solid ${C.borderDefault}`,
                   borderRadius: 6,
-                  color: '#8b8b8e',
+                  color: C.textMuted,
                   cursor: 'pointer',
+                  transition: 'all 150ms ease',
                 }}
               >
                 <X size={14} />
@@ -190,7 +202,7 @@ export function SecretModal({
 
             {/* Form */}
             <form onSubmit={handleSubmit} style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
-              <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: 18, flex: 1 }}>
+              <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: 20, flex: 1 }}>
 
                 {/* Key Name */}
                 <div>
@@ -204,8 +216,8 @@ export function SecretModal({
                     onFocus={() => setFocusedField('name')}
                     onBlur={() => setFocusedField(null)}
                     style={{
-                      ...getFocusBorder('name'),
-                      fontFamily: "'JetBrains Mono', monospace",
+                      ...monoInputBase,
+                      ...focused('name'),
                       opacity: editingSecret ? 0.5 : 1,
                     }}
                   />
@@ -221,7 +233,7 @@ export function SecretModal({
                     placeholder="Anthropic"
                     onFocus={() => setFocusedField('service')}
                     onBlur={() => setFocusedField(null)}
-                    style={getFocusBorder('service')}
+                    style={{ ...inputBase, ...focused('service') }}
                   />
                 </div>
 
@@ -235,10 +247,7 @@ export function SecretModal({
                     placeholder="sk-..."
                     onFocus={() => setFocusedField('value')}
                     onBlur={() => setFocusedField(null)}
-                    style={{
-                      ...getFocusBorder('value'),
-                      fontFamily: "'JetBrains Mono', monospace",
-                    }}
+                    style={{ ...monoInputBase, ...focused('value') }}
                   />
                 </div>
 
@@ -253,16 +262,17 @@ export function SecretModal({
                     onFocus={() => setFocusedField('desc')}
                     onBlur={() => setFocusedField(null)}
                     style={{
-                      ...getFocusBorder('desc'),
+                      ...inputBase,
+                      ...focused('desc'),
                       resize: 'none',
-                      lineHeight: 1.5,
+                      lineHeight: 1.6,
                     }}
                   />
                 </div>
 
                 {/* Tags */}
                 <div>
-                  <label style={labelStyle}>Project Tags</label>
+                  <label style={labelStyle}>Tags</label>
                   <div style={{ position: 'relative' }}>
                     <input
                       type="text"
@@ -274,10 +284,7 @@ export function SecretModal({
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') { e.preventDefault(); if (tagInput) addTag(tagInput); }
                       }}
-                      style={{
-                        ...getFocusBorder('tags'),
-                        paddingRight: tagInput ? 36 : 12,
-                      }}
+                      style={{ ...inputBase, ...focused('tags'), paddingRight: tagInput ? 40 : 12 }}
                     />
                     {tagInput && (
                       <button
@@ -285,14 +292,14 @@ export function SecretModal({
                         onMouseDown={() => addTag(tagInput)}
                         style={{
                           position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
-                          background: 'rgba(124,106,247,0.15)',
+                          background: 'rgba(94,106,210,0.15)',
                           border: 'none', borderRadius: 4,
-                          color: '#a89ef5', cursor: 'pointer',
+                          color: C.brandIndigo, cursor: 'pointer',
                           display: 'flex', alignItems: 'center', padding: '2px 6px',
-                          fontSize: 11,
+                          fontSize: 11, fontWeight: 500,
                         }}
                       >
-                        <Plus size={11} style={{ marginRight: 2 }} />
+                        <Plus size={10} style={{ marginRight: 2 }} />
                         add
                       </button>
                     )}
@@ -303,14 +310,13 @@ export function SecretModal({
                           initial={{ opacity: 0, y: -4 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -4 }}
+                          transition={{ duration: 0.1 }}
                           style={{
                             position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0,
-                            background: '#161618',
-                            border: '1px solid rgba(255,255,255,0.1)',
-                            borderRadius: 6,
-                            zIndex: 10,
-                            maxHeight: 120,
-                            overflowY: 'auto',
+                            background: C.surface,
+                            border: `1px solid ${C.borderDefault}`,
+                            borderRadius: 6, zIndex: 10,
+                            maxHeight: 120, overflowY: 'auto',
                             boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
                           }}
                         >
@@ -321,11 +327,10 @@ export function SecretModal({
                               onMouseDown={() => addTag(tag)}
                               style={{
                                 display: 'block', width: '100%', textAlign: 'left',
-                                padding: '7px 12px',
-                                fontSize: 12, color: '#ededef',
-                                background: 'none', border: 'none',
-                                cursor: 'pointer',
+                                padding: '7px 12px', fontSize: 13, color: C.textPrimary,
+                                background: 'transparent', border: 'none', cursor: 'pointer',
                                 fontFamily: "'Inter', sans-serif",
+                                fontFeatureSettings: '"cv01","ss03"',
                               }}
                             >
                               {tag}
@@ -337,12 +342,12 @@ export function SecretModal({
                               onMouseDown={() => addTag(tagInput)}
                               style={{
                                 display: 'block', width: '100%', textAlign: 'left',
-                                padding: '7px 12px',
-                                fontSize: 12, color: '#a89ef5',
-                                background: 'none', border: 'none',
-                                borderTop: tagSuggestions.length > 0 ? '1px solid rgba(255,255,255,0.06)' : 'none',
+                                padding: '7px 12px', fontSize: 13, color: C.brandIndigo,
+                                background: 'transparent', border: 'none',
+                                borderTop: tagSuggestions.length > 0 ? `1px solid ${C.borderSubtle}` : 'none',
                                 cursor: 'pointer',
                                 fontFamily: "'Inter', sans-serif",
+                                fontFeatureSettings: '"cv01","ss03"',
                               }}
                             >
                               + Create &ldquo;{tagInput}&rdquo;
@@ -362,11 +367,12 @@ export function SecretModal({
                           style={{
                             display: 'inline-flex', alignItems: 'center', gap: 5,
                             padding: '3px 8px',
-                            background: 'rgba(124,106,247,0.1)',
-                            border: '1px solid rgba(124,106,247,0.2)',
-                            borderRadius: 999,
-                            fontSize: 11, color: '#a89ef5',
+                            background: 'rgba(94,106,210,0.1)',
+                            border: '1px solid rgba(94,106,210,0.25)',
+                            borderRadius: 9999,
+                            fontSize: 12, fontWeight: 500, color: C.brandIndigo,
                             fontFamily: "'Inter', sans-serif",
+                            fontFeatureSettings: '"cv01","ss03"',
                           }}
                         >
                           {tag}
@@ -375,9 +381,8 @@ export function SecretModal({
                             onClick={() => removeTag(tag)}
                             style={{
                               background: 'none', border: 'none',
-                              cursor: 'pointer', color: '#7c6af7',
-                              display: 'flex', alignItems: 'center',
-                              padding: 0,
+                              cursor: 'pointer', color: C.brandIndigo,
+                              display: 'flex', alignItems: 'center', padding: 0,
                             }}
                           >
                             <X size={10} />
@@ -392,23 +397,21 @@ export function SecretModal({
               {/* Footer */}
               <div style={{
                 padding: '16px 24px',
-                borderTop: '1px solid rgba(255,255,255,0.06)',
+                borderTop: `1px solid ${C.borderSubtle}`,
                 display: 'flex', gap: 10, flexShrink: 0,
               }}>
                 <button
                   type="button"
                   onClick={onClose}
                   style={{
-                    flex: 1,
-                    height: 36,
-                    background: 'rgba(255,255,255,0.05)',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    borderRadius: 6,
-                    color: '#8b8b8e',
-                    fontSize: 13,
-                    fontWeight: 500,
-                    cursor: 'pointer',
-                    fontFamily: "'Inter', sans-serif",
+                    flex: 1, height: 36,
+                    background: 'rgba(255,255,255,0.04)',
+                    border: `1px solid ${C.borderDefault}`,
+                    borderRadius: 6, color: C.textMuted,
+                    fontSize: 13, fontWeight: 500,
+                    cursor: 'pointer', fontFamily: "'Inter', sans-serif",
+                    fontFeatureSettings: '"cv01","ss03"',
+                    transition: 'all 150ms ease',
                   }}
                 >
                   Cancel
@@ -418,17 +421,15 @@ export function SecretModal({
                   disabled={isLoading || !formData.name || !formData.service || !formData.value}
                   whileTap={{ scale: 0.97 }}
                   style={{
-                    flex: 1,
-                    height: 36,
-                    background: '#7c6af7',
-                    border: 'none',
-                    borderRadius: 6,
-                    color: '#fff',
-                    fontSize: 13,
-                    fontWeight: 500,
-                    cursor: isLoading ? 'not-allowed' : 'pointer',
+                    flex: 1, height: 36,
+                    background: C.brandIndigo,
+                    border: 'none', borderRadius: 6,
+                    color: '#fff', fontSize: 13, fontWeight: 500,
+                    cursor: (isLoading || !formData.name || !formData.service || !formData.value) ? 'not-allowed' : 'pointer',
                     opacity: (isLoading || !formData.name || !formData.service || !formData.value) ? 0.5 : 1,
                     fontFamily: "'Inter', sans-serif",
+                    fontFeatureSettings: '"cv01","ss03"',
+                    transition: 'opacity 150ms ease',
                   }}
                 >
                   {isLoading ? 'Saving…' : editingSecret ? 'Save Changes' : 'Add Key'}

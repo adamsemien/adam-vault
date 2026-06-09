@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Secret, ProjectToken, AuditLog, AuthUser } from '@/types';
 import { useApi } from '@/lib/useApi';
 import { SecretsList } from '@/components/SecretsList';
@@ -13,7 +13,27 @@ import { DeleteModal } from '@/components/DeleteModal';
 import { NewTokenModal } from '@/components/NewTokenModal';
 import { RevokeTokenModal } from '@/components/RevokeTokenModal';
 import { ToastManager } from '@/components/Toast';
-import { Plus, LogOut } from 'lucide-react';
+import { LogOut, Plus } from 'lucide-react';
+
+// ─── Design tokens ───────────────────────────────────────────────────────────
+const C = {
+  pageBg: '#08090a',
+  panelBg: '#0f1011',
+  surface: '#191a1b',
+  surfaceHover: '#28282c',
+  textPrimary: '#f7f8f8',
+  textSecondary: '#d0d6e0',
+  textMuted: '#8a8f98',
+  textSubtle: '#62666d',
+  brandIndigo: '#5e6ad2',
+  accentViolet: '#7170ff',
+  accentHover: '#828fff',
+  borderDefault: 'rgba(255,255,255,0.08)',
+  borderSubtle: 'rgba(255,255,255,0.05)',
+  success: '#10b981',
+  warning: '#f59e0b',
+  danger: '#ef4444',
+};
 
 type Toast = { id: string; message: string; type: 'success' | 'error' | 'info'; onDismiss?: () => void };
 type View = 'secrets' | 'tokens' | 'audit';
@@ -21,7 +41,7 @@ type View = 'secrets' | 'tokens' | 'audit';
 const NAV_TABS: { id: View; label: string }[] = [
   { id: 'secrets', label: 'Secrets' },
   { id: 'tokens', label: 'Tokens' },
-  { id: 'audit', label: 'Audit' },
+  { id: 'audit', label: 'Audit Log' },
 ];
 
 export default function VaultPage() {
@@ -51,7 +71,7 @@ export default function VaultPage() {
 
   const showToast = useCallback((message: string, type: 'success' | 'error' | 'info' = 'info') => {
     const id = Date.now().toString();
-    setToasts((prev) => [...prev, { id, message, type }]);
+    setToasts((prev) => [...prev.slice(-2), { id, message, type }]);
   }, []);
 
   const dismissToast = useCallback((id: string) => {
@@ -209,38 +229,31 @@ export default function VaultPage() {
   const openAddKey = () => { setEditingSecret(null); setSecretModalOpen(true); };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#080809', color: '#ededef', fontFamily: "'Inter', sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: C.pageBg, color: C.textPrimary, fontFamily: "'Inter', sans-serif", fontFeatureSettings: '"cv01", "ss03"' }}>
 
       {/* ── Top Nav ── */}
       <nav style={{
         position: 'sticky', top: 0, zIndex: 30,
         height: 48,
         display: 'flex', alignItems: 'center',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
-        background: 'rgba(8,8,9,0.92)',
-        backdropFilter: 'blur(12px)',
+        borderBottom: `1px solid ${C.borderSubtle}`,
+        background: C.panelBg,
         padding: '0 24px',
+        gap: 0,
       }}>
-        {/* Left: wordmark */}
+        {/* Left: monogram + wordmark */}
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: 14, fontWeight: 600,
-            color: '#ededef',
-            letterSpacing: '-0.01em',
+          <div style={{
+            width: 26, height: 26,
+            borderRadius: 6,
+            background: C.brandIndigo,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0,
           }}>
-            vault
-          </span>
-          <span style={{
-            padding: '1px 6px',
-            background: 'rgba(255,255,255,0.06)',
-            border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: 4,
-            fontSize: 10, fontWeight: 500,
-            color: '#555558',
-            fontFamily: "'JetBrains Mono', monospace",
-          }}>
-            v1.0
+            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 700, color: '#fff', letterSpacing: '-0.02em', fontFeatureSettings: '"cv01", "ss03"' }}>AV</span>
+          </div>
+          <span style={{ fontSize: 14, fontWeight: 500, color: C.textPrimary, letterSpacing: '-0.01em', fontFeatureSettings: '"cv01", "ss03"' }}>
+            Adam Vault
           </span>
         </div>
 
@@ -251,16 +264,17 @@ export default function VaultPage() {
               key={id}
               onClick={() => setView(id)}
               style={{
-                padding: '4px 12px',
-                borderRadius: 999,
+                padding: '5px 12px',
+                borderRadius: 6,
                 border: 'none',
                 fontSize: 13,
                 fontWeight: 500,
                 cursor: 'pointer',
                 fontFamily: "'Inter', sans-serif",
-                background: view === id ? 'rgba(255,255,255,0.07)' : 'transparent',
-                color: view === id ? '#ededef' : '#555558',
-                transition: 'all 0.15s',
+                fontFeatureSettings: '"cv01", "ss03"',
+                background: view === id ? 'rgba(255,255,255,0.06)' : 'transparent',
+                color: view === id ? C.textPrimary : C.textMuted,
+                transition: 'all 150ms ease',
               }}
             >
               {label}
@@ -268,52 +282,54 @@ export default function VaultPage() {
           ))}
         </div>
 
-        {/* Right: user info */}
+        {/* Right: live indicator + sign out */}
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 12 }}>
-          {/* Health dot */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <div style={{
-              position: 'relative',
-              width: 7, height: 7,
-            }}>
+            <div style={{ position: 'relative', width: 6, height: 6 }}>
               <div style={{
-                position: 'absolute', inset: 0,
-                borderRadius: '50%',
-                background: healthy ? '#22c55e' : '#ef4444',
+                width: 6, height: 6, borderRadius: '50%',
+                background: healthy ? C.success : C.danger,
+                position: 'absolute',
               }} />
               {healthy && (
                 <div style={{
                   position: 'absolute', inset: -2,
                   borderRadius: '50%',
-                  background: 'rgba(34,197,94,0.3)',
+                  background: `rgba(16,185,129,0.3)`,
                   animation: 'ping 2s ease-in-out infinite',
                 }} />
               )}
             </div>
+            <span style={{ fontSize: 12, fontWeight: 500, color: healthy ? C.success : C.danger, fontFamily: "'Inter', sans-serif" }}>
+              Live
+            </span>
           </div>
 
-          {user?.email && (
-            <span style={{ fontSize: 11, color: '#555558', fontFamily: "'Inter', sans-serif" }}>
-              {user.email}
-            </span>
-          )}
+          <div style={{ width: 1, height: 16, background: C.borderDefault }} />
 
           <button
             onClick={handleSignOut}
             style={{
               display: 'flex', alignItems: 'center', gap: 5,
-              height: 26, paddingLeft: 10, paddingRight: 10,
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: 5,
-              color: '#8b8b8e',
-              fontSize: 11, fontWeight: 500,
+              height: 28, paddingLeft: 10, paddingRight: 10,
+              background: 'rgba(255,255,255,0.04)',
+              border: `1px solid ${C.borderDefault}`,
+              borderRadius: 6,
+              color: C.textMuted,
+              fontSize: 12, fontWeight: 500,
               cursor: 'pointer',
               fontFamily: "'Inter', sans-serif",
-              transition: 'all 0.15s',
+              fontFeatureSettings: '"cv01", "ss03"',
+              transition: 'all 150ms ease',
             }}
-            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#ededef'; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = '#8b8b8e'; }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLButtonElement).style.color = C.textPrimary;
+              (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.07)';
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLButtonElement).style.color = C.textMuted;
+              (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)';
+            }}
           >
             <LogOut size={11} />
             Sign out
@@ -322,43 +338,16 @@ export default function VaultPage() {
       </nav>
 
       {/* ── Main Content ── */}
-      <main style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px' }}>
+      <main style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
 
         {/* SECRETS */}
         {view === 'secrets' && (
           <motion.div
             key="secrets"
-            initial={{ opacity: 0, y: 6 }}
+            initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.15 }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-              <div>
-                <h1 style={{ fontSize: 18, fontWeight: 600, color: '#ededef', letterSpacing: '-0.01em' }}>
-                  Secrets
-                </h1>
-                <p style={{ fontSize: 12, color: '#555558', marginTop: 2 }}>
-                  {secrets.length} key{secrets.length !== 1 ? 's' : ''} stored
-                </p>
-              </div>
-              <motion.button
-                onClick={openAddKey}
-                whileHover={{ scale: 1.01, background: '#8f7ff9' }}
-                whileTap={{ scale: 0.97 }}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  height: 32, paddingLeft: 12, paddingRight: 14,
-                  background: '#7c6af7',
-                  border: 'none', borderRadius: 6,
-                  color: '#fff', fontSize: 13, fontWeight: 500,
-                  cursor: 'pointer', fontFamily: "'Inter', sans-serif",
-                }}
-              >
-                <Plus size={13} />
-                Add Key
-              </motion.button>
-            </div>
-
             <SecretsList
               secrets={secrets}
               selectedTags={selectedFilterTags}
@@ -378,37 +367,10 @@ export default function VaultPage() {
         {view === 'tokens' && (
           <motion.div
             key="tokens"
-            initial={{ opacity: 0, y: 6 }}
+            initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.15 }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-              <div>
-                <h1 style={{ fontSize: 18, fontWeight: 600, color: '#ededef', letterSpacing: '-0.01em' }}>
-                  Tokens
-                </h1>
-                <p style={{ fontSize: 12, color: '#555558', marginTop: 2 }}>
-                  {tokens.filter((t) => !t.revoked).length} active token{tokens.filter((t) => !t.revoked).length !== 1 ? 's' : ''}
-                </p>
-              </div>
-              <motion.button
-                onClick={() => setNewTokenModalOpen(true)}
-                whileHover={{ scale: 1.01, background: '#8f7ff9' }}
-                whileTap={{ scale: 0.97 }}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  height: 32, paddingLeft: 12, paddingRight: 14,
-                  background: '#7c6af7',
-                  border: 'none', borderRadius: 6,
-                  color: '#fff', fontSize: 13, fontWeight: 500,
-                  cursor: 'pointer', fontFamily: "'Inter', sans-serif",
-                }}
-              >
-                <Plus size={13} />
-                New Token
-              </motion.button>
-            </div>
-
             <TokensList
               tokens={tokens}
               onRevoke={(t) => { setRevokingToken(t); setRevokeTokenModalOpen(true); }}
@@ -422,19 +384,10 @@ export default function VaultPage() {
         {view === 'audit' && (
           <motion.div
             key="audit"
-            initial={{ opacity: 0, y: 6 }}
+            initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.15 }}
           >
-            <div style={{ marginBottom: 24 }}>
-              <h1 style={{ fontSize: 18, fontWeight: 600, color: '#ededef', letterSpacing: '-0.01em' }}>
-                Audit Log
-              </h1>
-              <p style={{ fontSize: 12, color: '#555558', marginTop: 2 }}>
-                Auto-refreshes every 10 seconds
-              </p>
-            </div>
-
             <AuditLogComponent
               logs={auditLogs}
               onRefresh={fetchAuditLogs}

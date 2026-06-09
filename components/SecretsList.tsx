@@ -2,9 +2,25 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lock, Copy, Pencil, RotateCcw, Trash2, ChevronDown } from 'lucide-react';
+import { Eye, Pencil, RefreshCw, Trash2, ChevronDown } from 'lucide-react';
 import { Secret } from '@/types';
 import { formatDistanceToNow } from '@/lib/dateUtils';
+
+// ─── Design tokens ────────────────────────────────────────────────────────────
+const C = {
+  pageBg: '#08090a',
+  panelBg: '#0f1011',
+  surface: '#191a1b',
+  textPrimary: '#f7f8f8',
+  textMuted: '#8a8f98',
+  textSubtle: '#62666d',
+  brandIndigo: '#5e6ad2',
+  borderDefault: 'rgba(255,255,255,0.08)',
+  borderSubtle: 'rgba(255,255,255,0.05)',
+  success: '#10b981',
+  warning: '#f59e0b',
+  danger: '#ef4444',
+};
 
 export interface SecretsListProps {
   secrets: Secret[];
@@ -22,22 +38,17 @@ export interface SecretsListProps {
 function SkeletonRow() {
   return (
     <tr>
-      <td className="px-5 py-3">
-        <div className="h-4 w-32 rounded" style={{ background: 'rgba(255,255,255,0.06)', animation: 'pulse 1.5s ease-in-out infinite' }} />
-      </td>
-      <td className="px-5 py-3">
-        <div className="h-4 w-20 rounded" style={{ background: 'rgba(255,255,255,0.06)', animation: 'pulse 1.5s ease-in-out infinite' }} />
-      </td>
-      <td className="px-5 py-3">
-        <div className="h-4 w-24 rounded" style={{ background: 'rgba(255,255,255,0.06)', animation: 'pulse 1.5s ease-in-out infinite' }} />
-      </td>
-      <td className="px-5 py-3">
-        <div className="h-4 w-16 rounded" style={{ background: 'rgba(255,255,255,0.06)', animation: 'pulse 1.5s ease-in-out infinite' }} />
-      </td>
-      <td className="px-5 py-3">
-        <div className="h-4 w-12 rounded" style={{ background: 'rgba(255,255,255,0.06)', animation: 'pulse 1.5s ease-in-out infinite' }} />
-      </td>
-      <td className="px-5 py-3" />
+      {[120, 80, 100, 60, 60, 0].map((w, i) => (
+        <td key={i} style={{ padding: '12px 16px', borderBottom: `1px solid ${C.borderSubtle}` }}>
+          {w > 0 && (
+            <div style={{
+              height: 13, width: w, borderRadius: 4,
+              background: 'rgba(255,255,255,0.04)',
+              animation: 'skeleton-pulse 1.5s ease-in-out infinite',
+            }} />
+          )}
+        </td>
+      ))}
     </tr>
   );
 }
@@ -60,295 +71,325 @@ export function SecretsList({
   const filteredSecrets =
     selectedTags.length === 0
       ? secrets
-      : secrets.filter((s) =>
-          selectedTags.some((tag) => s.project_tags?.includes(tag))
-        );
+      : secrets.filter((s) => selectedTags.some((tag) => s.project_tags?.includes(tag)));
 
-  if (!isLoading && secrets.length === 0) {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 0', gap: '16px' }}>
+  return (
+    <div>
+      {/* ── Toolbar ── */}
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '12px 0',
+        borderBottom: `1px solid ${C.borderSubtle}`,
+      }}>
+        {/* Left: count badge */}
         <div style={{
-          width: 48, height: 48, borderRadius: '12px',
+          display: 'flex', alignItems: 'center', gap: 8,
+          height: 26, paddingLeft: 10, paddingRight: 10,
           background: 'rgba(255,255,255,0.04)',
-          border: '1px solid rgba(255,255,255,0.08)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center'
+          border: `1px solid ${C.borderDefault}`,
+          borderRadius: 6,
         }}>
-          <Lock size={20} style={{ color: '#555558' }} />
+          <span style={{ fontSize: 12, fontWeight: 500, color: C.textMuted, fontFamily: "'Inter', sans-serif", fontFeatureSettings: '"cv01","ss03"' }}>
+            {secrets.length} key{secrets.length !== 1 ? 's' : ''}
+          </span>
         </div>
-        <div style={{ textAlign: 'center' }}>
-          <p style={{ color: '#8b8b8e', fontSize: '14px', marginBottom: 4 }}>No secrets yet</p>
-          <p style={{ color: '#555558', fontSize: '12px' }}>Add your first key to get started.</p>
-        </div>
-        {onAddKey && (
+
+        {/* Right: filter + add */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {/* Filter dropdown */}
+          {allTags.length > 0 && (
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setFilterOpen(!filterOpen)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  height: 32, paddingLeft: 10, paddingRight: 10,
+                  background: 'rgba(255,255,255,0.04)',
+                  border: `1px solid ${C.borderDefault}`,
+                  borderRadius: 6,
+                  color: selectedTags.length > 0 ? C.brandIndigo : C.textMuted,
+                  fontSize: 13, fontWeight: 500,
+                  cursor: 'pointer',
+                  fontFamily: "'Inter', sans-serif",
+                  fontFeatureSettings: '"cv01","ss03"',
+                  transition: 'all 150ms ease',
+                }}
+              >
+                {selectedTags.length === 0 ? 'Filter by tag' : selectedTags.join(', ')}
+                <ChevronDown size={12} style={{ color: C.textSubtle }} />
+              </button>
+              <AnimatePresence>
+                {filterOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -4, scale: 0.98 }}
+                    transition={{ duration: 0.1 }}
+                    style={{
+                      position: 'absolute', top: 'calc(100% + 4px)', right: 0,
+                      zIndex: 100,
+                      background: '#191a1b',
+                      border: `1px solid ${C.borderDefault}`,
+                      borderRadius: 8,
+                      minWidth: 160,
+                      overflow: 'hidden',
+                      boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+                    }}
+                  >
+                    <button
+                      onClick={() => { onFilterChange([]); setFilterOpen(false); }}
+                      style={{
+                        display: 'block', width: '100%', textAlign: 'left',
+                        padding: '8px 12px', fontSize: 13,
+                        color: selectedTags.length === 0 ? C.textPrimary : C.textMuted,
+                        background: selectedTags.length === 0 ? 'rgba(255,255,255,0.04)' : 'transparent',
+                        border: 'none', cursor: 'pointer',
+                        fontFamily: "'Inter', sans-serif",
+                        fontFeatureSettings: '"cv01","ss03"',
+                      }}
+                    >
+                      All tags
+                    </button>
+                    {allTags.map((tag) => (
+                      <button
+                        key={tag}
+                        onClick={() => { onFilterChange([tag]); setFilterOpen(false); }}
+                        style={{
+                          display: 'block', width: '100%', textAlign: 'left',
+                          padding: '8px 12px', fontSize: 13,
+                          color: selectedTags.includes(tag) ? C.brandIndigo : C.textMuted,
+                          background: selectedTags.includes(tag) ? 'rgba(94,106,210,0.1)' : 'transparent',
+                          border: 'none', cursor: 'pointer',
+                          fontFamily: "'Inter', sans-serif",
+                          fontFeatureSettings: '"cv01","ss03"',
+                        }}
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
+
+          {/* Add Key primary button */}
           <motion.button
             onClick={onAddKey}
-            whileHover={{ scale: 1.02 }}
+            whileHover={{ background: '#6b79e0' }}
             whileTap={{ scale: 0.97 }}
             style={{
-              marginTop: 8,
-              height: 32, paddingLeft: 14, paddingRight: 14,
-              background: '#7c6af7',
+              display: 'flex', alignItems: 'center', gap: 6,
+              height: 32, paddingLeft: 16, paddingRight: 16,
+              background: C.brandIndigo,
               border: 'none', borderRadius: 6,
               color: '#fff', fontSize: 13, fontWeight: 500,
               cursor: 'pointer', fontFamily: "'Inter', sans-serif",
+              fontFeatureSettings: '"cv01","ss03"',
             }}
           >
             Add Key
           </motion.button>
-        )}
+        </div>
       </div>
-    );
-  }
 
-  return (
-    <div>
-      {/* Filter bar */}
-      {allTags.length > 0 && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-          <span style={{ fontSize: 12, color: '#555558', fontFamily: "'Inter', sans-serif" }}>Filter:</span>
-          <div style={{ position: 'relative' }}>
-            <button
-              onClick={() => setFilterOpen(!filterOpen)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                height: 28, paddingLeft: 10, paddingRight: 8,
-                background: 'rgba(255,255,255,0.04)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: 6,
-                color: selectedTags.length > 0 ? '#a89ef5' : '#8b8b8e',
-                fontSize: 12,
-                cursor: 'pointer',
-                fontFamily: "'Inter', sans-serif",
-              }}
-            >
-              {selectedTags.length === 0 ? 'All tags' : selectedTags.join(', ')}
-              <ChevronDown size={12} />
-            </button>
-            <AnimatePresence>
-              {filterOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: -4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  style={{
-                    position: 'absolute', top: 'calc(100% + 4px)', left: 0,
-                    zIndex: 100,
-                    background: '#161618',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: 8,
-                    minWidth: 140,
-                    overflow: 'hidden',
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
-                  }}
-                >
-                  <button
-                    onClick={() => { onFilterChange([]); setFilterOpen(false); }}
+      {/* ── Table ── */}
+      {!isLoading && secrets.length === 0 ? (
+        /* Empty state */
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 0', gap: 16 }}>
+          <div style={{ textAlign: 'center' }}>
+            <p style={{ color: C.textSubtle, fontSize: 14, fontFamily: "'Inter', sans-serif", fontFeatureSettings: '"cv01","ss03"' }}>
+              No secrets yet. Add your first key{' '}
+              <button
+                onClick={onAddKey}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  color: C.brandIndigo, fontSize: 14, fontWeight: 500,
+                  fontFamily: "'Inter', sans-serif",
+                  padding: 0,
+                }}
+              >
+                →
+              </button>
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div style={{ width: '100%', overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ borderBottom: `1px solid ${C.borderDefault}` }}>
+                {['NAME', 'SERVICE', 'TAGS', 'ROTATED', 'STATUS', 'ACTIONS'].map((h) => (
+                  <th
+                    key={h}
                     style={{
-                      display: 'block', width: '100%', textAlign: 'left',
-                      padding: '7px 12px', fontSize: 12,
-                      color: selectedTags.length === 0 ? '#ededef' : '#8b8b8e',
-                      background: selectedTags.length === 0 ? 'rgba(255,255,255,0.05)' : 'none',
-                      border: 'none', cursor: 'pointer',
+                      padding: '10px 16px',
+                      textAlign: 'left',
+                      fontSize: 11,
+                      fontWeight: 600,
+                      letterSpacing: '0.05em',
+                      color: C.textSubtle,
                       fontFamily: "'Inter', sans-serif",
+                      fontFeatureSettings: '"cv01","ss03"',
+                      whiteSpace: 'nowrap',
+                      textTransform: 'uppercase',
                     }}
                   >
-                    All tags
-                  </button>
-                  {allTags.map((tag) => (
-                    <button
-                      key={tag}
-                      onClick={() => { onFilterChange([tag]); setFilterOpen(false); }}
-                      style={{
-                        display: 'block', width: '100%', textAlign: 'left',
-                        padding: '7px 12px', fontSize: 12,
-                        color: selectedTags.includes(tag) ? '#a89ef5' : '#8b8b8e',
-                        background: selectedTags.includes(tag) ? 'rgba(124,106,247,0.08)' : 'none',
-                        border: 'none', cursor: 'pointer',
-                        fontFamily: "'Inter', sans-serif",
-                      }}
-                    >
-                      {tag}
-                    </button>
-                  ))}
-                </motion.div>
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {isLoading ? (
+                Array.from({ length: 4 }).map((_, i) => <SkeletonRow key={i} />)
+              ) : filteredSecrets.length === 0 ? (
+                <tr>
+                  <td colSpan={6} style={{ padding: '40px 16px', textAlign: 'center', color: C.textSubtle, fontSize: 13, fontFamily: "'Inter', sans-serif" }}>
+                    No secrets match the selected filter
+                  </td>
+                </tr>
+              ) : (
+                filteredSecrets.map((secret, i) => (
+                  <motion.tr
+                    key={secret.id}
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.03, duration: 0.15 }}
+                    onHoverStart={() => setHoveredId(secret.id)}
+                    onHoverEnd={() => setHoveredId(null)}
+                    style={{
+                      borderBottom: `1px solid ${C.borderSubtle}`,
+                      background: hoveredId === secret.id ? 'rgba(255,255,255,0.02)' : 'transparent',
+                      transition: 'background 150ms ease',
+                      cursor: 'default',
+                    }}
+                  >
+                    {/* NAME */}
+                    <td style={{ padding: '12px 16px' }}>
+                      <span style={{
+                        fontFamily: "'JetBrains Mono', monospace",
+                        fontSize: 13,
+                        fontWeight: 500,
+                        color: C.textPrimary,
+                      }}>
+                        {secret.name}
+                      </span>
+                    </td>
+
+                    {/* SERVICE */}
+                    <td style={{ padding: '12px 16px', fontSize: 13, color: C.textMuted, fontFamily: "'Inter', sans-serif", fontFeatureSettings: '"cv01","ss03"' }}>
+                      {secret.service}
+                    </td>
+
+                    {/* TAGS */}
+                    <td style={{ padding: '12px 16px' }}>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                        {secret.project_tags?.map((tag) => (
+                          <span
+                            key={tag}
+                            style={{
+                              padding: '2px 8px',
+                              background: 'transparent',
+                              border: `1px solid rgba(255,255,255,0.05)`,
+                              color: C.textMuted,
+                              fontSize: 12,
+                              fontWeight: 500,
+                              borderRadius: 9999,
+                              fontFamily: "'Inter', sans-serif",
+                              fontFeatureSettings: '"cv01","ss03"',
+                            }}
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+
+                    {/* ROTATED */}
+                    <td style={{ padding: '12px 16px', fontSize: 13, color: C.textSubtle, fontFamily: "'Inter', sans-serif", fontFeatureSettings: '"cv01","ss03"', whiteSpace: 'nowrap' }}>
+                      {secret.last_rotated
+                        ? formatDistanceToNow(new Date(secret.last_rotated))
+                        : 'never'}
+                    </td>
+
+                    {/* STATUS */}
+                    <td style={{ padding: '12px 16px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <div style={{
+                          width: 6, height: 6, borderRadius: '50%',
+                          background: secret.needs_rotation ? C.warning : C.success,
+                          flexShrink: 0,
+                        }} />
+                        <span style={{
+                          fontSize: 13,
+                          color: secret.needs_rotation ? C.warning : C.success,
+                          fontFamily: "'Inter', sans-serif",
+                          fontFeatureSettings: '"cv01","ss03"',
+                          fontWeight: 500,
+                        }}>
+                          {secret.needs_rotation ? 'Needs Rotation' : 'OK'}
+                        </span>
+                      </div>
+                    </td>
+
+                    {/* ACTIONS */}
+                    <td style={{ padding: '12px 16px' }}>
+                      <AnimatePresence>
+                        {hoveredId === secret.id && (
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.1 }}
+                            style={{ display: 'flex', gap: 4, alignItems: 'center' }}
+                          >
+                            {[
+                              { label: 'View', icon: <Eye size={13} />, action: () => onReveal(secret), danger: false },
+                              { label: 'Edit', icon: <Pencil size={13} />, action: () => onEdit(secret), danger: false },
+                              { label: 'Rotate', icon: <RefreshCw size={13} />, action: () => onRotate(secret), danger: false },
+                              { label: 'Delete', icon: <Trash2 size={13} />, action: () => onDelete(secret), danger: true },
+                            ].map(({ label, icon, action, danger }) => (
+                              <button
+                                key={label}
+                                onClick={action}
+                                title={label}
+                                style={{
+                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                  width: 28, height: 28,
+                                  background: 'rgba(255,255,255,0.04)',
+                                  border: `1px solid ${C.borderDefault}`,
+                                  borderRadius: 6,
+                                  color: danger ? C.danger : C.textMuted,
+                                  cursor: 'pointer',
+                                  transition: 'all 150ms ease',
+                                }}
+                                onMouseEnter={e => {
+                                  (e.currentTarget as HTMLButtonElement).style.background = danger ? 'rgba(239,68,68,0.1)' : 'rgba(255,255,255,0.08)';
+                                  (e.currentTarget as HTMLButtonElement).style.color = danger ? C.danger : C.textPrimary;
+                                }}
+                                onMouseLeave={e => {
+                                  (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)';
+                                  (e.currentTarget as HTMLButtonElement).style.color = danger ? C.danger : C.textMuted;
+                                }}
+                              >
+                                {icon}
+                              </button>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </td>
+                  </motion.tr>
+                ))
               )}
-            </AnimatePresence>
-          </div>
+            </tbody>
+          </table>
         </div>
       )}
 
-      {/* Table */}
-      <div style={{ width: '100%', overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-              {['NAME', 'SERVICE', 'TAGS', 'ROTATED', 'STATUS', ''].map((h) => (
-                <th
-                  key={h}
-                  style={{
-                    padding: '0 20px 10px',
-                    textAlign: 'left',
-                    fontSize: 11,
-                    fontWeight: 500,
-                    letterSpacing: '0.05em',
-                    color: '#555558',
-                    fontFamily: "'Inter', sans-serif",
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading ? (
-              Array.from({ length: 4 }).map((_, i) => <SkeletonRow key={i} />)
-            ) : filteredSecrets.length === 0 ? (
-              <tr>
-                <td colSpan={6} style={{ padding: '40px 20px', textAlign: 'center', color: '#555558', fontSize: 13, fontFamily: "'Inter', sans-serif" }}>
-                  No secrets match the selected filter
-                </td>
-              </tr>
-            ) : (
-              filteredSecrets.map((secret, i) => (
-                <motion.tr
-                  key={secret.id}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.03, duration: 0.2 }}
-                  onHoverStart={() => setHoveredId(secret.id)}
-                  onHoverEnd={() => setHoveredId(null)}
-                  style={{
-                    borderBottom: '1px solid rgba(255,255,255,0.04)',
-                    background: hoveredId === secret.id ? 'rgba(255,255,255,0.02)' : 'transparent',
-                    transition: 'background 0.1s ease',
-                    cursor: 'default',
-                  }}
-                >
-                  {/* NAME */}
-                  <td style={{ padding: '11px 20px' }}>
-                    <span style={{
-                      display: 'inline-block',
-                      padding: '2px 8px',
-                      background: 'rgba(255,255,255,0.05)',
-                      borderRadius: 4,
-                      fontFamily: "'JetBrains Mono', monospace",
-                      fontSize: 12,
-                      fontWeight: 500,
-                      color: '#ededef',
-                      letterSpacing: '0.02em',
-                    }}>
-                      {secret.name}
-                    </span>
-                  </td>
-
-                  {/* SERVICE */}
-                  <td style={{ padding: '11px 20px', fontSize: 13, color: '#8b8b8e', fontFamily: "'Inter', sans-serif" }}>
-                    {secret.service}
-                  </td>
-
-                  {/* TAGS */}
-                  <td style={{ padding: '11px 20px' }}>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                      {secret.project_tags?.map((tag) => (
-                        <span
-                          key={tag}
-                          style={{
-                            padding: '2px 8px',
-                            background: 'rgba(124,106,247,0.08)',
-                            color: '#a89ef5',
-                            fontSize: 11,
-                            fontWeight: 500,
-                            borderRadius: 999,
-                            fontFamily: "'Inter', sans-serif",
-                          }}
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </td>
-
-                  {/* ROTATED */}
-                  <td style={{ padding: '11px 20px', fontSize: 11, color: '#555558', fontFamily: "'JetBrains Mono', monospace", whiteSpace: 'nowrap' }}>
-                    {secret.last_rotated
-                      ? formatDistanceToNow(new Date(secret.last_rotated))
-                      : 'never'}
-                  </td>
-
-                  {/* STATUS */}
-                  <td style={{ padding: '11px 20px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <div style={{
-                        width: 6, height: 6, borderRadius: '50%',
-                        background: secret.needs_rotation ? '#f59e0b' : '#22c55e',
-                        boxShadow: secret.needs_rotation ? '0 0 6px rgba(245,158,11,0.5)' : '0 0 6px rgba(34,197,94,0.5)',
-                      }} />
-                      <span style={{ fontSize: 12, color: secret.needs_rotation ? '#f59e0b' : '#22c55e', fontFamily: "'Inter', sans-serif" }}>
-                        {secret.needs_rotation ? 'Due' : 'OK'}
-                      </span>
-                    </div>
-                  </td>
-
-                  {/* ACTIONS */}
-                  <td style={{ padding: '11px 20px' }}>
-                    <AnimatePresence>
-                      {hoveredId === secret.id && (
-                        <motion.div
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          transition={{ duration: 0.1 }}
-                          style={{ display: 'flex', gap: 4, alignItems: 'center' }}
-                        >
-                          {[
-                            { label: 'Reveal', icon: <Copy size={11} />, action: () => onReveal(secret), color: '#8b8b8e' },
-                            { label: 'Edit', icon: <Pencil size={11} />, action: () => onEdit(secret), color: '#8b8b8e' },
-                            { label: 'Rotate', icon: <RotateCcw size={11} />, action: () => onRotate(secret), color: '#8b8b8e' },
-                            { label: 'Delete', icon: <Trash2 size={11} />, action: () => onDelete(secret), color: '#ef4444' },
-                          ].map(({ label, icon, action, color }) => (
-                            <button
-                              key={label}
-                              onClick={action}
-                              title={label}
-                              style={{
-                                display: 'flex', alignItems: 'center', gap: 4,
-                                padding: '4px 8px', height: 26,
-                                background: 'rgba(255,255,255,0.04)',
-                                border: '1px solid rgba(255,255,255,0.07)',
-                                borderRadius: 5,
-                                color,
-                                fontSize: 11,
-                                fontWeight: 500,
-                                cursor: 'pointer',
-                                fontFamily: "'Inter', sans-serif",
-                                transition: 'background 0.1s, border-color 0.1s',
-                              }}
-                              onMouseEnter={e => {
-                                (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.07)';
-                              }}
-                              onMouseLeave={e => {
-                                (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)';
-                              }}
-                            >
-                              {icon}
-                              {label}
-                            </button>
-                          ))}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </td>
-                </motion.tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
       <style>{`
-        @keyframes pulse {
+        @keyframes skeleton-pulse {
           0%, 100% { opacity: 0.5; }
           50% { opacity: 1; }
         }

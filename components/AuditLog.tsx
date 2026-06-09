@@ -1,10 +1,29 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RefreshCw } from 'lucide-react';
 import { AuditLog } from '@/types';
 import { formatDistanceToNow } from '@/lib/dateUtils';
+
+// ─── Design tokens ────────────────────────────────────────────────────────────
+const C = {
+  panelBg: '#0f1011',
+  textPrimary: '#f7f8f8',
+  textMuted: '#8a8f98',
+  textSubtle: '#62666d',
+  brandIndigo: '#5e6ad2',
+  borderDefault: 'rgba(255,255,255,0.08)',
+  borderSubtle: 'rgba(255,255,255,0.05)',
+};
+
+const ACTION_STYLES: Record<string, { bg: string; color: string }> = {
+  created:  { bg: 'rgba(94,106,210,0.15)',   color: '#7170ff' },
+  viewed:   { bg: 'rgba(255,255,255,0.05)',   color: '#8a8f98' },
+  updated:  { bg: 'rgba(234,179,8,0.15)',     color: '#ca8a04' },
+  rotated:  { bg: 'rgba(16,185,129,0.15)',    color: '#10b981' },
+  deleted:  { bg: 'rgba(239,68,68,0.15)',     color: '#ef4444' },
+};
 
 export interface AuditLogProps {
   logs: AuditLog[];
@@ -12,66 +31,95 @@ export interface AuditLogProps {
   isLoading?: boolean;
 }
 
-const ACTION_STYLES: Record<string, { bg: string; color: string }> = {
-  created: { bg: 'rgba(59,130,246,0.1)', color: '#60a5fa' },
-  viewed: { bg: 'rgba(107,114,128,0.1)', color: '#9ca3af' },
-  rotated: { bg: 'rgba(124,106,247,0.1)', color: '#a89ef5' },
-  updated: { bg: 'rgba(245,158,11,0.1)', color: '#f59e0b' },
-  deleted: { bg: 'rgba(239,68,68,0.1)', color: '#ef4444' },
-};
-
 export function AuditLogComponent({ logs, onRefresh, isLoading = false }: AuditLogProps) {
+  const [lastRefreshed, setLastRefreshed] = useState(Date.now());
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    setLastRefreshed(Date.now());
+    setElapsed(0);
+  }, [logs]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - lastRefreshed) / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [lastRefreshed]);
+
   return (
     <div>
-      {/* Header bar */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <span style={{ fontSize: 12, color: '#555558', fontFamily: "'Inter', sans-serif" }}>
-          Last 50 entries
-        </span>
-        <button
-          onClick={onRefresh}
-          disabled={isLoading}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            height: 28, paddingLeft: 10, paddingRight: 10,
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: 6,
-            color: '#8b8b8e',
-            fontSize: 12,
-            cursor: isLoading ? 'not-allowed' : 'pointer',
-            opacity: isLoading ? 0.6 : 1,
-            fontFamily: "'Inter', sans-serif",
-          }}
-        >
-          <motion.span
-            animate={isLoading ? { rotate: 360 } : { rotate: 0 }}
-            transition={isLoading ? { duration: 1, repeat: Infinity, ease: 'linear' } : {}}
-            style={{ display: 'flex' }}
+      {/* ── Toolbar ── */}
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '12px 0',
+        borderBottom: `1px solid ${C.borderSubtle}`,
+      }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 8,
+          height: 26, paddingLeft: 10, paddingRight: 10,
+          background: 'rgba(255,255,255,0.04)',
+          border: `1px solid ${C.borderDefault}`,
+          borderRadius: 6,
+        }}>
+          <span style={{ fontSize: 12, fontWeight: 500, color: C.textMuted, fontFamily: "'Inter', sans-serif", fontFeatureSettings: '"cv01","ss03"' }}>
+            {logs.length} entries
+          </span>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 12, color: C.textSubtle, fontFamily: "'Inter', sans-serif", fontFeatureSettings: '"cv01","ss03"' }}>
+            Refreshed {elapsed}s ago
+          </span>
+          <button
+            onClick={() => { onRefresh(); }}
+            disabled={isLoading}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              height: 28, paddingLeft: 10, paddingRight: 10,
+              background: 'rgba(255,255,255,0.04)',
+              border: `1px solid ${C.borderDefault}`,
+              borderRadius: 6,
+              color: C.textMuted,
+              fontSize: 12, fontWeight: 500,
+              cursor: isLoading ? 'not-allowed' : 'pointer',
+              opacity: isLoading ? 0.6 : 1,
+              fontFamily: "'Inter', sans-serif",
+              fontFeatureSettings: '"cv01","ss03"',
+              transition: 'all 150ms ease',
+            }}
           >
-            <RefreshCw size={12} />
-          </motion.span>
-          {isLoading ? 'Refreshing…' : 'Refresh'}
-        </button>
+            <motion.span
+              animate={isLoading ? { rotate: 360 } : { rotate: 0 }}
+              transition={isLoading ? { duration: 1, repeat: Infinity, ease: 'linear' } : {}}
+              style={{ display: 'flex' }}
+            >
+              <RefreshCw size={12} />
+            </motion.span>
+            {isLoading ? 'Refreshing…' : 'Refresh'}
+          </button>
+        </div>
       </div>
 
-      {/* Table */}
+      {/* ── Table ── */}
       <div style={{ width: '100%', overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
-            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-              {['TIMESTAMP', 'ACTION', 'KEY', 'SOURCE', 'NOTE'].map((h) => (
+            <tr style={{ borderBottom: `1px solid ${C.borderDefault}` }}>
+              {['TIME', 'ACTION', 'KEY', 'SOURCE'].map((h) => (
                 <th
                   key={h}
                   style={{
-                    padding: '0 20px 10px',
+                    padding: '10px 16px',
                     textAlign: 'left',
                     fontSize: 11,
-                    fontWeight: 500,
+                    fontWeight: 600,
                     letterSpacing: '0.05em',
-                    color: '#555558',
+                    color: C.textSubtle,
                     fontFamily: "'Inter', sans-serif",
+                    fontFeatureSettings: '"cv01","ss03"',
                     whiteSpace: 'nowrap',
+                    textTransform: 'uppercase',
                   }}
                 >
                   {h}
@@ -82,7 +130,7 @@ export function AuditLogComponent({ logs, onRefresh, isLoading = false }: AuditL
           <tbody>
             {logs.length === 0 ? (
               <tr>
-                <td colSpan={5} style={{ padding: '48px 20px', textAlign: 'center', color: '#555558', fontSize: 13, fontFamily: "'Inter', sans-serif" }}>
+                <td colSpan={4} style={{ padding: '48px 16px', textAlign: 'center', color: C.textSubtle, fontSize: 13, fontFamily: "'Inter', sans-serif", fontFeatureSettings: '"cv01","ss03"' }}>
                   No audit logs yet
                 </td>
               </tr>
@@ -96,25 +144,24 @@ export function AuditLogComponent({ logs, onRefresh, isLoading = false }: AuditL
                     animate={{ opacity: 1 }}
                     transition={{ delay: i * 0.02 }}
                     style={{
-                      borderBottom: 'none',
-                      paddingBottom: 2,
+                      borderBottom: `1px solid ${C.borderSubtle}`,
                     }}
                   >
-                    {/* TIMESTAMP */}
-                    <td style={{ padding: '8px 20px', fontSize: 11, color: '#555558', fontFamily: "'JetBrains Mono', monospace", whiteSpace: 'nowrap' }}>
+                    {/* TIME */}
+                    <td style={{ padding: '10px 16px', fontSize: 12, color: C.textSubtle, fontFamily: "'JetBrains Mono', monospace", whiteSpace: 'nowrap' }}>
                       {formatDistanceToNow(new Date(log.timestamp))}
                     </td>
 
                     {/* ACTION */}
-                    <td style={{ padding: '8px 20px' }}>
+                    <td style={{ padding: '10px 16px' }}>
                       <span style={{
                         padding: '2px 8px',
-                        borderRadius: 999,
-                        fontSize: 11,
-                        fontWeight: 500,
+                        borderRadius: 9999,
+                        fontSize: 12, fontWeight: 500,
                         background: style.bg,
                         color: style.color,
                         fontFamily: "'Inter', sans-serif",
+                        fontFeatureSettings: '"cv01","ss03"',
                         letterSpacing: '0.01em',
                       }}>
                         {log.action}
@@ -122,11 +169,10 @@ export function AuditLogComponent({ logs, onRefresh, isLoading = false }: AuditL
                     </td>
 
                     {/* KEY */}
-                    <td style={{ padding: '8px 20px' }}>
+                    <td style={{ padding: '10px 16px' }}>
                       <span style={{
                         fontFamily: "'JetBrains Mono', monospace",
-                        fontSize: 11,
-                        color: '#8b8b8e',
+                        fontSize: 12, color: C.textMuted,
                         letterSpacing: '0.02em',
                       }}>
                         {log.secret_id}
@@ -134,13 +180,8 @@ export function AuditLogComponent({ logs, onRefresh, isLoading = false }: AuditL
                     </td>
 
                     {/* SOURCE */}
-                    <td style={{ padding: '8px 20px', fontSize: 12, color: '#8b8b8e', fontFamily: "'Inter', sans-serif" }}>
+                    <td style={{ padding: '10px 16px', fontSize: 13, color: C.textMuted, fontFamily: "'Inter', sans-serif", fontFeatureSettings: '"cv01","ss03"' }}>
                       {log.token_name || 'Dashboard'}
-                    </td>
-
-                    {/* NOTE */}
-                    <td style={{ padding: '8px 20px', fontSize: 12, color: '#555558', fontFamily: "'Inter', sans-serif" }}>
-                      {log.note || '—'}
                     </td>
                   </motion.tr>
                 );

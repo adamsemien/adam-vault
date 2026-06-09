@@ -1,22 +1,22 @@
 @import "tailwindcss";
 
 :root {
-  --bg-base: #080809;
-  --bg-surface: #0f0f12;
-  --bg-elevated: #161618;
-  --bg-overlay: #1c1c1f;
-  --border: #ffffff0f;
-  --border-strong: #ffffff1a;
-  --text-primary: #ededef;
-  --text-secondary: #8b8b8e;
-  --text-muted: #555558;
-  --accent: #7c6af7;
-  --accent-hover: #8f7ff9;
-  --accent-dim: rgba(124, 106, 247, 0.08);
-  --green: #22c55e;
-  --amber: #f59e0b;
-  --red: #ef4444;
-  --red-dim: rgba(239, 68, 68, 0.08);
+  --page-bg: #08090a;
+  --panel-bg: #0f1011;
+  --surface: #191a1b;
+  --surface-hover: #28282c;
+  --text-primary: #f7f8f8;
+  --text-secondary: #d0d6e0;
+  --text-muted: #8a8f98;
+  --text-subtle: #62666d;
+  --brand-indigo: #5e6ad2;
+  --accent-violet: #7170ff;
+  --accent-hover: #828fff;
+  --border-default: rgba(255, 255, 255, 0.08);
+  --border-subtle: rgba(255, 255, 255, 0.05);
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
 }
 
 * {
@@ -30,9 +30,10 @@ html {
 }
 
 body {
-  background-color: #080809;
-  color: #ededef;
+  background-color: #08090a;
+  color: #f7f8f8;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-feature-settings: "cv01", "ss03";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -44,36 +45,66 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.04);
+  background: #28282c;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.14);
+  background: #3a3a44;
   border-radius: 2px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.22);
+  background: #4a4a54;
 }
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.14) rgba(255, 255, 255, 0.04);
+  scrollbar-color: #3a3a44 #28282c;
 }
 
 /* Selection */
 ::selection {
-  background: rgba(124, 106, 247, 0.3);
-  color: #ededef;
+  background: rgba(113, 112, 255, 0.3);
+  color: #f7f8f8;
 }
 
 /* Focus ring */
 :focus-visible {
-  outline: 1.5px solid rgba(124, 106, 247, 0.6);
+  outline: 1px solid rgba(113, 112, 255, 0.5);
   outline-offset: 2px;
 }
 
 /* Remove default focus for mouse clicks */
 :focus:not(:focus-visible) {
   outline: none;
+}
+
+/* All transitions */
+*, *::before, *::after {
+  transition-duration: 150ms;
+  transition-timing-function: ease;
+}
+
+/* Animations */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+@keyframes ping {
+  0%, 100% { transform: scale(1); opacity: 0.3; }
+  50% { transform: scale(1.6); opacity: 0; }
+}
+
+.animate-pulse-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+.animate-skeleton {
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
 }

@@ -13,11 +13,16 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:wght@400;500;600&display=swap"
           rel="stylesheet"
         />
+        <style>{`
+          body {
+            font-feature-settings: "cv01", "ss03";
+          }
+        `}</style>
       </head>
-      <body style={{ backgroundColor: '#080809', color: '#ededef' }}>
+      <body style={{ backgroundColor: '#08090a', color: '#f7f8f8' }}>
         {children}
       </body>
     </html>
